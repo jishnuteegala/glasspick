@@ -94,9 +94,9 @@ Extract a bundle and publish its contents on any static host.
 
 Release Please maintains a reviewed release PR from Conventional Commits.
 Merging that PR creates the version tag, generated changelog, GitHub Release, and static bundles; GlassPick is not published to npm.
-GlassPick keeps the repository setting that prevents Actions from creating or approving pull requests.
-To activate release PR automation, configure a fine-grained `RELEASE_PLEASE_TOKEN` Actions secret with read/write access to contents, issues, and pull requests.
-Without that optional token, the release workflow exits successfully without changing releases or weakening repository permissions.
+Release Please uses the repository's built-in `GITHUB_TOKEN` to create and update the release PR.
+You choose the release cutoff by merging that PR manually; it is never auto-merged.
+GitHub suppresses ordinary workflow events created by `GITHUB_TOKEN`, so required CI on the generated release PR can be started through the CI workflow's manual-dispatch action before merge.
 
 ## License
 
