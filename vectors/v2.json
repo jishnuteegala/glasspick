@@ -1,0 +1,43 @@
+{
+  "chainHash": "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
+  "algorithm": "virtual-tickets-v1",
+  "entries": [
+    { "name": "alice", "weight": 1 },
+    { "name": "bob", "weight": 3 },
+    { "name": "carol", "weight": 2 },
+    { "name": "dave", "weight": 1 }
+  ],
+  "winnerCount": 2,
+  "alternateCount": 1,
+  "nonce": "00000000000000000000000000000008",
+  "round": 123456,
+  "randomness": "a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
+  "commitmentHash": "f7d433426dad7bf85f258dac654b00236c99b3b7db40ebb14990fd57111c16b6",
+  "seed": "554489ec27b779e224622b09b09e68574a3672dcbd59d13f0ed939513b105d14",
+  "winners": ["carol", "bob"],
+  "alternates": ["dave"],
+  "picks": [
+    { "total": 7, "attempt": 0, "digest": "3f42a2911d147d04bb66dea86ec9d3a41d6bcd803e0ea3f8ea8fbd617dcdc607", "ticket": 4, "selected": "carol" },
+    { "total": 5, "attempt": 0, "digest": "7355eba840dfd95d2f76b63cfc641d66231e5bde0c6e0477fed964e7415f6dea", "ticket": 3, "selected": "bob" },
+    { "total": 2, "attempt": 0, "digest": "b25f6e47d46d5cd3b9c3e2c7c4d7c64a52a5edae137b8d06a378610b1e35a27b", "ticket": 1, "selected": "dave" }
+  ],
+  "rejectionBoundary": {
+    "total": 3,
+    "candidates": [
+      { "offsetFromLimit": -1, "accepted": true, "ticket": 2 },
+      { "offsetFromLimit": 0, "accepted": false },
+      { "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "accepted": false }
+    ]
+  },
+  "unicodeVectors": [
+    {
+      "input": ["@Zoe\u0308", "\ud83d\ude00", "\ue000", "\u00c9lodie", "E\u0301MILE"],
+      "canonicalNames": ["zo\u00eb", "\u00c9lodie", "\u00c9mile", "\ue000", "\ud83d\ude00"]
+    },
+    {
+      "input": [" \t@ALICE\r", "\u00a0Alice\u00a0", "\u00e9lodie", "\u00c9lodie"],
+      "canonicalNames": ["alice", "\u00a0alice\u00a0", "\u00c9lodie", "\u00e9lodie"]
+    }
+  ],
+  "rejectedNames": ["bad\u0000name", "bad\ud800name", "bad\udc00name"]
+}

@@ -1,60 +1,103 @@
 # GlassPick
 
-An open-source, provably fair giveaway winner picker. Nothing behind the glass: every draw can be independently verified by the creator, the winners, and everyone who didn't win.
+[![CI](https://github.com/jishnuteegala/glasspick/actions/workflows/ci.yml/badge.svg)](https://github.com/jishnuteegala/glasspick/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-111827.svg)](LICENSE)
 
-## Why
+GlassPick is an open-source, provably fair weighted giveaway picker.
+It commits every outcome-affecting input before a future drand round exists, then produces a record anyone can reproduce locally.
 
-Winner-picker tools ask you to trust them: a winner pops out and you have no way to check the pick wasn't rigged. Open-sourcing the code isn't enough — you'd still have to trust that the host actually ran that code.
+## Proof Contract
 
-GlassPick removes the trust requirement:
+GlassPick emits and accepts only draw record version 2 using `virtual-tickets-v1` and drand quicknet chain `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971`.
 
-1. **Commit-reveal.** Before the draw, GlassPick hashes the canonical participant list, winner count, a random nonce, and a *future* [drand](https://drand.love) round number into a commitment hash. Publishing it locks the draw in — no swapping participants, no re-rolling.
-2. **Public randomness.** The seed comes from drand, a randomness beacon run by the League of Entropy. The committed round didn't exist yet at commit time, so nobody could know or influence it.
-3. **Deterministic selection.** `winner[i] = SHA-256(seed | i) mod remaining` over the sorted participant list. Same inputs, same winners, on any machine.
+Entrant names are trimmed only of ASCII space, tab, carriage return, and line feed at their edges, then one leading ASCII `@` is removed and the result is normalized to Unicode NFC. ASCII `A` through `Z` are folded to lowercase; all non-ASCII characters are case-sensitive. Control characters and unpaired UTF-16 surrogates are rejected. In particular, non-breaking space is accepted as part of a name and is not trimmed.
+Canonical entries are sorted by unsigned lexicographic comparison of their UTF-8 bytes, then joined as `name,weight` with newline separators. This ordering is independent of locale and UTF-16 code-unit ordering.
+Weights are 1 to 100000 per entrant and at most 1000000 total.
+Duplicate canonical identities are rejected.
 
-Every draw produces a JSON record containing all inputs and outputs. The **Verify** tab recomputes the entire draw locally in your browser and cross-checks the randomness against the public drand beacon. You can also verify with a few lines of any language — no GlassPick required.
+The exact commitment preimage is:
 
-## The algorithm
-
-```
-participants   = dedupe(strip '@', case-insensitive) then sort (case-insensitive)
-participantsHash = SHA-256(join(lowercase(participants), "\n"))
-commitmentHash = SHA-256("glasspick-v1|" + participantsHash + "|" + count + "|" + winnerCount + "|" + nonce + "|" + drandRound)
-seed           = SHA-256("glasspick-seed-v1|" + commitmentHash + "|" + drandRandomness)
-winner[i]      = pool[ SHA-256(seed + "|" + i) mod pool.length ]   (winner removed from pool each round)
+```text
+glasspick-v2|chainHash|algorithm|canonicalEntries|entrantCount|totalWeight|winnerCount|alternateCount|nonce|round
 ```
 
-All hashes are lowercase hex. The full implementation lives in [`src/engine/draw.ts`](src/engine/draw.ts) (~150 lines, no dependencies).
+The draw seed is `SHA-256("glasspick-seed-v2|" + commitmentHash + "|" + randomness)`.
+For each pick index, GlassPick hashes ASCII `${seed}|${pickIndex}|${attempt}` and interprets the digest as an unsigned big-endian integer.
+For remaining total weight `T`, `limit = 2^256 - (2^256 mod T)`. A digest is accepted if and only if `0 <= digest < limit`; otherwise it is rejected and retried with the next attempt.
+The accepted digest modulo `T` selects a virtual ticket, then the selected entrant and every one of their tickets are removed.
+Alternates are the next positions in this same sequence.
 
-## Running locally
+## Share Envelopes
+
+Post-draw links use `#gp1=` independently of draw record versions.
+The default stub is uncompressed base64url JSON containing only commitment hash, chain hash, round, winner count, and alternate count.
+It contains no entrant names or outcomes.
+Explicit full links contain a DEFLATE-compressed JSON record encoded as base64url.
+
+Pending live links use `#gpp1=` and carry the complete versioned pending state in the same compressed transport.
+Compression output is not specified as byte-canonical because browser implementations may differ; decoding and the proof record are deterministic.
+Native `CompressionStream` and `DecompressionStream` are required for compressed links, with JSON download as the fallback.
+
+Generated representative records were measured locally.
+GlassPick caps encoded fragments at 16000 characters and decoded output at 1 MB, a conservative fit beneath common browser limits while leaving room for the origin URL.
+We cannot guarantee every chat application accepts that length, so oversized full links fall back to JSON plus the privacy-safe stub.
+
+## Development
 
 ```sh
 pnpm install
-pnpm dev        # start the app
-pnpm test       # engine tests
+pnpm test
 pnpm typecheck
 pnpm lint
-pnpm build      # static output in dist/
 ```
 
-The app is a fully static SPA — no backend, no accounts, no tracking. All draw logic runs in your browser.
+`pnpm test` runs Vitest and the dependency-free Python vector verifier.
+The app is a fully static SPA with no backend, accounts, telemetry, storage service, or secrets.
+
+### Proof vector script
+
+Agents and independent implementations can check the frozen cross-language proof vectors directly:
+
+```sh
+python -X utf8 scripts/verify_vectors.py
+```
 
 ## Deployment
 
-Any static host works — the build is just `dist/`. Recommended options:
+Cloudflare Pages is recommended: connect the repository, use `pnpm build`, and publish `dist/`.
+Vercel and GitHub Pages also work for the static output.
+The only runtime dependency is direct browser access to the chain-specific drand quicknet relays.
 
-- **Cloudflare Pages** (recommended): free, fast, no config. Connect the repo, set build command `pnpm build` and output directory `dist`.
-- **Vercel**: import the repo, framework preset "Vite", done.
-- **GitHub Pages**: add a workflow that runs `pnpm build` and deploys `dist/` (set `base` in `vite.config.ts` if serving from a subpath).
+The hosted app accepts pasted entrant lists to remain free and secret-free.
+For direct X integration, self-host GlassPick and keep your own paid X API bearer token in a server-side Worker or function, never in browser code.
+Return a handle list from that service and feed it into the same proof engine.
 
-There is nothing server-side to configure: no environment variables, no database, no secrets. The only external dependency is the public drand HTTP relays, called directly from the visitor's browser.
+The recommended public home is `glasspick.jishnuteegala.com`.
+It keeps the app under the existing domain and shared privacy notice while preserving GlassPick's identity.
+At deployment time, add the subdomain to the coverage list at `jishnuteegala.com/privacy` and state that GlassPick uses functional local storage for pending draws, makes direct requests to the drand Quicknet relays, and has no analytics, accounts, forms, payments, or advertising.
 
-## Getting the participant list
+## Privacy and legal
 
-The hosted version is paste-based: paste participant handles from any source (one per line or comma-separated) and get a provably fair, verifiable pick. This keeps the hosted app free, static, and secret-free.
+GlassPick does not use analytics, cookies, accounts, payments, contact forms, or user-generated content hosting.
+Entrant lists and draw records are processed in the visitor's browser and are not sent to GlassPick.
+Pending draws use local storage so a draw can survive a refresh; this is functional storage.
+Public randomness requests go directly from the browser to the drand Quicknet relays.
 
-**Want direct X/Twitter integration?** Self-host GlassPick and plug in your own X API key. Because pulling likers/retweeters requires a paid X API bearer token, that can never ship in the shared hosted version — but a self-hosted copy can add a small fetch step (e.g. a Cloudflare Worker or serverless function that calls the X API with your token and returns the handle list) and paste the result into the draw. The core draw engine is source-agnostic, so the commitment/verification story is identical either way.
+The deployed subdomain should link to the shared privacy notice at `https://jishnuteegala.com/privacy` rather than duplicate it, but only after that notice's coverage list is updated for GlassPick.
+A separate privacy page and terms of service are not needed for the current product.
+
+## Self-hosted releases
+
+The hosted site deploys continuously from `main`, while self-hosters should use a tagged GitHub Release rather than an arbitrary commit.
+Each release includes source archives from GitHub plus prebuilt `glasspick-<version>.zip` and `.tar.gz` static bundles with `SHA256SUMS`.
+Extract a bundle and publish its contents on any static host.
+
+Release Please maintains a reviewed release PR from Conventional Commits.
+Merging that PR creates the version tag, generated changelog, GitHub Release, and static bundles; GlassPick is not published to npm.
+By default, Release Please uses the repository's built-in `GITHUB_TOKEN`, matching the standard create/update/manual-merge flow.
+An optional fine-grained `RELEASE_PLEASE_TOKEN` secret with read/write access to contents, issues, and pull requests makes generated release PRs trigger normal pull-request CI automatically.
+Without the optional token, release PRs still work but their required CI checks may need to be started with the CI workflow's manual-dispatch action before merge.
 
 ## License
 
-MIT
+MIT - see [LICENSE](LICENSE).
