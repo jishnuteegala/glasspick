@@ -1,0 +1,18 @@
+# GlassPick
+
+GlassPick is an open-source, provably fair weighted giveaway picker.
+It commits draw inputs before a future drand Quicknet round exists and produces a JSON record that can be independently verified.
+
+## Canonical resources
+
+- Source and proof specification: https://github.com/jishnuteegala/glasspick
+- Privacy notice when deployed: https://jishnuteegala.com/privacy
+- License: MIT
+
+## Product facts
+
+- No accounts, analytics, advertising, payments, or hosted user-generated content.
+- Entrant lists and draw records are processed locally in the browser.
+- Functional local storage preserves pending draws across refreshes.
+- Browser requests to the public drand Quicknet relays provide randomness.
+- Direct X integration is self-hosted and requires the operator's own server-side X API key.

@@ -1,290 +1,215 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
-  canonicalizeParticipants,
-  createCommitment,
+  parseEntries,
   runDraw,
-  type DrawCommitment,
   type DrawRecord,
+  type PendingDraw,
+  type WeightedEntry,
 } from "../engine/draw"
+import { createFutureCommitment, estimateRoundTime, fetchRoundWithRetry, QUICKNET_SCHEDULE } from "../engine/drand"
+import { createFullEnvelope, createPendingEnvelope, createStub } from "../engine/envelope"
+import { createGenerationGuard } from "../engine/generation"
 import { randomNonceHex } from "../engine/hash"
-import {
-  estimateRoundTime,
-  fetchChainInfo,
-  fetchLatestRound,
-  fetchRoundWithRetry,
-} from "../engine/drand"
+import { PENDING_KEY, restorePending } from "../engine/pending"
+import { resetDisclosureAcknowledgements } from "./draw-page-state"
 
-const COMMIT_LEAD_ROUNDS = 3
-const PENDING_KEY = "glasspick-pending-draw"
-
-interface PendingDraw {
-  participants: string[]
-  winnerCount: number
-  nonce: string
-  commitment: DrawCommitment
-  roundTimeMs: number
+export function ResultList({ title, entries }: { title: string; entries: WeightedEntry[] }) {
+  return <div><h2 className="text-sm font-semibold">{title}</h2><ol className="mt-2 divide-y divide-line border-y border-line">
+    {entries.map((entry, index) => <li className="flex items-center gap-3 py-3" key={entry.name}>
+      <span className="w-6 text-sm text-muted">{index + 1}.</span><strong>@{entry.name}</strong>
+      {entry.weight > 1 && <span className="text-sm text-muted">weight {entry.weight}</span>}
+    </li>)}
+  </ol></div>
 }
 
-function loadPending(): PendingDraw | null {
-  try {
-    const raw = localStorage.getItem(PENDING_KEY)
-    return raw ? (JSON.parse(raw) as PendingDraw) : null
-  } catch {
-    return null
-  }
+export function DrawResults({ record }: { record: Pick<DrawRecord, "winners" | "alternates"> }) {
+  return <section className="panel space-y-6">
+    <h1 className="text-base font-semibold">Draw complete</h1>
+    <ResultList title="Winners" entries={record.winners} />
+    {record.alternates.length > 0 && <ResultList title="Alternates" entries={record.alternates} />}
+  </section>
+}
+
+export function LiveLinkDisclosure({
+  checked,
+  onChange,
+  onCopy,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  onCopy: () => void
+}) {
+  return <>
+    <label className="touch-option mt-3 max-w-xl text-sm">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      I understand the live reveal link publishes entrant names and weights to anyone who receives it.
+    </label>
+    <button className="button-secondary" disabled={!checked} onClick={onCopy}>Copy entrant-revealing live link</button>
+  </>
 }
 
 export function DrawPage() {
-  const [pending, setPending] = useState<PendingDraw | null>(loadPending)
-  const [rawList, setRawList] = useState(() =>
-    pending ? pending.participants.join("\n") : "",
-  )
-  const [winnerCount, setWinnerCount] = useState(() =>
-    pending ? pending.winnerCount : 1,
-  )
+  const [raw, setRaw] = useState("")
+  const [weighted, setWeighted] = useState(false)
+  const [winnerCount, setWinnerCount] = useState(1)
+  const [alternateCount, setAlternateCount] = useState(0)
+  const [pending, setPending] = useState<PendingDraw | null>(null)
   const [record, setRecord] = useState<DrawRecord | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [restoring, setRestoring] = useState(true)
   const [now, setNow] = useState(Date.now())
+  const [fullDisclosure, setFullDisclosure] = useState(false)
+  const [liveDisclosure, setLiveDisclosure] = useState(false)
+  const generation = useRef(createGenerationGuard())
+  const commitAbort = useRef<AbortController | null>(null)
+  const drawAbort = useRef<AbortController | null>(null)
+  let entries: WeightedEntry[] = []
+  let inputError: string | null = null
+  try { entries = parseEntries(raw, weighted) } catch (caught) {
+    inputError = caught instanceof Error ? caught.message : "Invalid entrant list"
+  }
 
-  const participants = useMemo(
-    () => canonicalizeParticipants(rawList),
-    [rawList],
-  )
+  useEffect(() => {
+    let active = true
+    const guard = generation.current
+    void restorePending(localStorage)
+      .then((saved) => { if (active) setPending(saved) })
+      .catch((caught: unknown) => {
+        if (active) setError(caught instanceof Error ? caught.message : "Could not restore the saved commitment")
+      })
+      .finally(() => { if (active) setRestoring(false) })
+    return () => { active = false; guard.cancel(); commitAbort.current?.abort(); drawAbort.current?.abort() }
+  }, [])
 
   useEffect(() => {
     if (!pending || record) return
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
   }, [pending, record])
 
-  const secondsLeft = pending
-    ? Math.max(0, Math.ceil((pending.roundTimeMs - now) / 1000))
-    : 0
-
-  async function handleCommit() {
-    setError(null)
-    setBusy(true)
+  async function commit() {
+    const current = generation.current.next()
+    commitAbort.current?.abort()
+    const controller = new AbortController()
+    commitAbort.current = controller
+    setBusy(true); setError(null)
     try {
-      const [info, latest] = await Promise.all([
-        fetchChainInfo(),
-        fetchLatestRound(),
-      ])
-      const targetRound = latest.round + COMMIT_LEAD_ROUNDS
-      const nonce = randomNonceHex()
-      const clampedWinners = Math.min(winnerCount, participants.length)
-      const commitment = await createCommitment(
-        participants,
-        clampedWinners,
-        nonce,
-        targetRound,
-      )
-      const next: PendingDraw = {
-        participants,
-        winnerCount: clampedWinners,
-        nonce,
-        commitment,
-        roundTimeMs: estimateRoundTime(info, targetRound),
-      }
-      setPending(next)
-      localStorage.setItem(PENDING_KEY, JSON.stringify(next))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reach drand")
+      if (inputError) throw new Error(inputError)
+      const commitment = await createFutureCommitment({
+        entries,
+        winnerCount,
+        alternateCount,
+        nonce: randomNonceHex(),
+      }, controller.signal)
+      if (!generation.current.isCurrent(current)) return
+      const next = { envelopeVersion: 1 as const, commitment }
+      localStorage.setItem(PENDING_KEY, JSON.stringify(next)); setPending(next)
+    } catch (caught) {
+      if (generation.current.isCurrent(current)) setError(caught instanceof Error ? caught.message : "Could not create commitment")
     } finally {
-      setBusy(false)
+      if (generation.current.isCurrent(current)) setBusy(false)
+      if (commitAbort.current === controller) commitAbort.current = null
     }
   }
 
-  async function handleDraw() {
+  async function draw() {
     if (!pending) return
-    setError(null)
-    setBusy(true)
+    const current = generation.current.next()
+    const controller = new AbortController()
+    drawAbort.current?.abort()
+    drawAbort.current = controller
+    setBusy(true); setError(null)
     try {
-      const round = await fetchRoundWithRetry(pending.commitment.drandRound)
-      const result = await runDraw(
-        pending.participants,
-        pending.winnerCount,
-        pending.nonce,
-        round.round,
-        round.randomness,
-      )
-      setRecord(result)
-      localStorage.removeItem(PENDING_KEY)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch drand round",
-      )
+      const beacon = await fetchRoundWithRetry(pending.commitment.round, 15, 2000, controller.signal)
+      const result = await runDraw(pending.commitment, beacon.randomness)
+      if (!generation.current.isCurrent(current)) return
+      setRecord(result); localStorage.removeItem(PENDING_KEY)
+    } catch (caught) {
+      if (generation.current.isCurrent(current)) setError(caught instanceof Error ? caught.message : "Could not fetch the beacon")
     } finally {
-      setBusy(false)
+      if (generation.current.isCurrent(current)) setBusy(false)
+      if (drawAbort.current === controller) drawAbort.current = null
     }
+  }
+
+  async function copyLink(kind: "stub" | "full" | "live") {
+    try {
+      let hash = ""
+      if (kind === "live" && pending) hash = await createPendingEnvelope(pending)
+      if (kind === "stub" && record) hash = createStub(record)
+      if (kind === "full" && record) hash = await createFullEnvelope(record)
+      const url = `${location.origin}${location.pathname}${hash}`
+      if (url.length > 16_000) throw new Error("Generated URL exceeds the 16,000-character safety limit")
+      await navigator.clipboard.writeText(url)
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not create link") }
+  }
+
+  function download() {
+    if (!record) return
+    const url = URL.createObjectURL(new Blob([JSON.stringify(record, null, 2)], { type: "application/json" }))
+    const link = document.createElement("a"); link.href = url
+    link.download = `glasspick-${record.commitmentHash.slice(0, 12)}.json`; link.click(); URL.revokeObjectURL(url)
   }
 
   function reset() {
-    setPending(null)
-    setRecord(null)
-    setError(null)
-    setCopied(false)
-    localStorage.removeItem(PENDING_KEY)
+    const disclosure = resetDisclosureAcknowledgements()
+    generation.current.cancel(); commitAbort.current?.abort(); drawAbort.current?.abort(); localStorage.removeItem(PENDING_KEY); setPending(null); setRecord(null); setError(null); setBusy(false)
+    setFullDisclosure(disclosure.full); setLiveDisclosure(disclosure.live)
   }
 
-  async function copyCommitment() {
-    if (!pending) return
-    await navigator.clipboard.writeText(pending.commitment.commitmentHash)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  function downloadRecord() {
-    if (!record) return
-    const blob = new Blob([JSON.stringify(record, null, 2)], {
-      type: "application/json",
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `glasspick-draw-${record.commitmentHash.slice(0, 12)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  return (
-    <div className="space-y-6">
-      <section className="rounded-lg border border-line bg-surface p-6">
-        <h1 className="text-base font-semibold">Run a draw</h1>
-        <p className="mt-1 text-sm text-muted">
-          Paste participants (one per line or comma-separated). Duplicates are
-          removed and the list is sorted so anyone can reproduce it.
-        </p>
-        <label className="mt-4 block text-sm font-medium" htmlFor="participants">
-          Participants
-        </label>
-        <textarea
-          id="participants"
-          value={rawList}
-          onChange={(e) => setRawList(e.target.value)}
-          disabled={!!pending}
-          rows={8}
-          placeholder={"@alice\n@bob\n@carol"}
-          className="mt-1 w-full rounded-md border border-line bg-surface p-3 font-mono text-sm focus:border-primary focus:outline-none disabled:opacity-60"
-        />
-        <div className="mt-1 text-sm text-muted">
-          {participants.length} unique participant
-          {participants.length === 1 ? "" : "s"}
+  const secondsLeft = pending ? Math.max(0, Math.ceil((estimateRoundTime(QUICKNET_SCHEDULE, pending.commitment.round) - now) / 1000)) : 0
+  const countInvalid = winnerCount + alternateCount > entries.length
+  return <div className="space-y-6">
+    {!pending && !record && <section className="panel">
+      <h1 className="text-base font-semibold">Run a draw</h1>
+      <p className="mt-1 text-sm text-muted">Commit the exact entrant weights and outcomes before public randomness exists.</p>
+      <fieldset className="mt-5"><legend className="text-sm font-medium">Input format</legend>
+        <div className="mt-2 flex flex-wrap gap-x-5 text-sm">
+          <label className="touch-option"><input type="radio" checked={!weighted} onChange={() => setWeighted(false)} /> Plain names</label>
+          <label className="touch-option"><input type="radio" checked={weighted} onChange={() => setWeighted(true)} /> Weighted, one name,weight per line</label>
         </div>
-
-        <label className="mt-4 block text-sm font-medium" htmlFor="winners">
-          Number of winners
+      </fieldset>
+      <label className="label" htmlFor="entrants">Entrants</label>
+      <textarea id="entrants" rows={9} value={raw} onChange={(event) => setRaw(event.target.value)}
+        placeholder={weighted ? "alice,3\nbob,1" : "alice\nbob\ncarol"} className="control font-mono" />
+      <p className="mt-1 text-sm text-muted">ASCII edge whitespace and one leading @ are removed. ASCII A-Z is folded to lowercase; Unicode remains case-sensitive.</p>
+      <p className={`mt-1 text-sm ${inputError ? "text-fail" : "text-muted"}`}>{inputError ?? `${entries.length} entrants, ${entries.reduce((sum, entry) => sum + entry.weight, 0)} total weight`}</p>
+      <div className="mt-4 flex flex-wrap gap-5">
+        <label className="text-sm font-medium">Winners<input className="control mt-1 w-24" type="number" min="1" value={winnerCount} onChange={(event) => setWinnerCount(Number(event.target.value))} /></label>
+        <label className="text-sm font-medium">Alternates<input className="control mt-1 w-24" type="number" min="0" max="5" value={alternateCount} onChange={(event) => setAlternateCount(Number(event.target.value))} /></label>
+      </div>
+      {countInvalid && <p className="mt-2 text-sm text-fail">Winners and alternates cannot exceed the entrant count.</p>}
+      <button className="button-primary mt-6" disabled={restoring || busy || !!inputError || entries.length === 0 || countInvalid} onClick={commit}>{restoring ? "Restoring..." : busy ? "Creating..." : "Create commitment"}</button>
+    </section>}
+    {pending && !record && <section className="panel">
+      <h1 className="text-base font-semibold">Commitment locked</h1>
+      <p className="mt-1 text-sm text-muted">Quicknet round {pending.commitment.round} fixes the public randomness for this draw.</p>
+      <code className="hash">{pending.commitment.commitmentHash}</code>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{secondsLeft > 0 ? "Commitment locked. Waiting for the selected Quicknet round." : "The selected Quicknet round is ready. You can run the draw."}</p>
+      <div className="mt-2 flex flex-wrap gap-3">
+        <LiveLinkDisclosure checked={liveDisclosure} onChange={setLiveDisclosure} onCopy={() => copyLink("live")} />
+        <button className="button-primary" disabled={busy || secondsLeft > 0} onClick={draw}>{secondsLeft ? `Available in ${secondsLeft}s` : busy ? "Checking..." : "Run draw"}</button>
+        <button className="button-secondary" onClick={reset}>Cancel</button>
+      </div>
+    </section>}
+    {record && <div className="space-y-6">
+      <DrawResults record={record} />
+      <section className="panel">
+        <h2 className="text-sm font-semibold">Share and verify</h2>
+        <p className="text-sm text-muted">The privacy-safe link is the default. It contains no names or outcomes and requires the record JSON to verify.</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <button className="button-primary" onClick={() => copyLink("stub")}>Copy privacy-safe link</button>
+          <button className="button-secondary" onClick={download}>Download JSON</button>
+          <button className="button-secondary" onClick={reset}>New draw</button>
+        </div>
+        <label className="touch-option mt-3 max-w-xl text-sm">
+          <input type="checkbox" checked={fullDisclosure} onChange={(event) => setFullDisclosure(event.target.checked)} />
+          I understand the full link publishes entrant names, weights, and outcomes to anyone who receives it.
         </label>
-        <input
-          id="winners"
-          type="number"
-          min={1}
-          max={Math.max(1, participants.length)}
-          value={winnerCount}
-          onChange={(e) =>
-            setWinnerCount(Math.max(1, Number(e.target.value) || 1))
-          }
-          disabled={!!pending}
-          className="mt-1 w-24 rounded-md border border-line bg-surface p-2 text-sm focus:border-primary focus:outline-none disabled:opacity-60"
-        />
-
-        {!pending && (
-          <div className="mt-6">
-            <button
-              onClick={handleCommit}
-              disabled={busy || participants.length === 0}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {busy ? "Creating commitment…" : "Create commitment"}
-            </button>
-          </div>
-        )}
+        <button className="button-secondary mt-3" disabled={!fullDisclosure} onClick={() => copyLink("full")}>Copy full record link</button>
       </section>
-
-      {pending && !record && (
-        <section className="rounded-lg border border-line bg-surface p-6">
-          <h2 className="text-base font-semibold">Commitment published</h2>
-          <p className="mt-1 text-sm text-muted">
-            Share this hash with your audience now — it locks in the
-            participant list and winner count before the randomness exists.
-            The draw uses drand round{" "}
-            <span className="font-mono">{pending.commitment.drandRound}</span>,
-            public randomness nobody (including you) can influence.
-          </p>
-          <div className="mt-3 break-all rounded-md border border-line bg-bg p-3 font-mono text-sm">
-            {pending.commitment.commitmentHash}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              onClick={copyCommitment}
-              className="rounded-md border border-line px-4 py-2 text-sm hover:bg-bg"
-            >
-              {copied ? "Copied!" : "Copy hash"}
-            </button>
-            <button
-              onClick={handleDraw}
-              disabled={busy || secondsLeft > 0}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {secondsLeft > 0
-                ? `Randomness available in ${secondsLeft}s`
-                : busy
-                  ? "Drawing…"
-                  : "Run draw"}
-            </button>
-            <button
-              onClick={reset}
-              className="rounded-md border border-line px-4 py-2 text-sm hover:bg-bg"
-            >
-              Cancel
-            </button>
-          </div>
-        </section>
-      )}
-
-      {record && (
-        <section className="rounded-lg border border-line bg-surface p-6">
-          <h2 className="text-base font-semibold">
-            Winner{record.winners.length === 1 ? "" : "s"}
-          </h2>
-          <ul className="mt-3 space-y-2">
-            {record.winners.map((w, i) => (
-              <li
-                key={w}
-                className="flex items-center gap-3 rounded-md border border-line bg-bg p-3"
-              >
-                <span className="text-sm text-muted">#{i + 1}</span>
-                <span className="font-medium">@{w}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-sm text-muted">
-            Download the draw record and publish it. Anyone can verify it on
-            the Verify tab — or with any SHA-256 tool, no GlassPick required.
-          </p>
-          <div className="mt-3 flex gap-3">
-            <button
-              onClick={downloadRecord}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-            >
-              Download draw record
-            </button>
-            <button
-              onClick={reset}
-              className="rounded-md border border-line px-4 py-2 text-sm hover:bg-bg"
-            >
-              New draw
-            </button>
-          </div>
-        </section>
-      )}
-
-      {error && (
-        <div className="rounded-md border border-fail/40 bg-surface p-4 text-sm text-fail">
-          {error}
-        </div>
-      )}
-    </div>
-  )
+    </div>}
+    {error && <div role="alert" className="notice-fail">{error}</div>}
+  </div>
 }
