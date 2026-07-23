@@ -12,6 +12,8 @@ dist
 dist-ssr
 artifact
 *.local
+worker/.dev.vars*
+worker/.env*
 
 # Editor directories and files
 .vscode/*

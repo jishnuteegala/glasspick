@@ -1,4 +1,5 @@
 import { createCommitment, parsePending, type PendingDraw } from "./draw"
+import { withDrawStateLock } from "./draw-state-lock"
 
 export const PENDING_KEY = "glasspick-pending-v2"
 
@@ -7,11 +8,9 @@ interface PendingStorage {
   removeItem(key: string): void
 }
 
-export async function restorePending(storage: PendingStorage): Promise<PendingDraw | null> {
-  let raw: string | null = null
+export async function restorePendingValue(raw: string | null): Promise<PendingDraw | null> {
+  if (!raw) return null
   try {
-    raw = storage.getItem(PENDING_KEY)
-    if (!raw) return null
     const pending = parsePending(JSON.parse(raw))
     const recomputed = await createCommitment(pending.commitment)
     if (recomputed.commitmentHash !== pending.commitment.commitmentHash) {
@@ -19,9 +18,22 @@ export async function restorePending(storage: PendingStorage): Promise<PendingDr
     }
     return pending
   } catch {
-    if (raw !== null) {
-      try { storage.removeItem(PENDING_KEY) } catch { /* The invalid value still must not be used. */ }
-    }
     throw new Error("The saved commitment was invalid and has been discarded. Create a new commitment.")
+  }
+}
+
+export async function restorePending(storage: PendingStorage): Promise<PendingDraw | null> {
+  let raw: string | null = null
+  try {
+    raw = storage.getItem(PENDING_KEY)
+    return await restorePendingValue(raw)
+  } catch (caught) {
+    if (raw !== null) {
+      const invalid = raw
+      await withDrawStateLock(() => {
+        try { if (storage.getItem(PENDING_KEY) === invalid) storage.removeItem(PENDING_KEY) } catch { /* The invalid value still must not be used. */ }
+      })
+    }
+    throw caught
   }
 }
