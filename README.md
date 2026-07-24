@@ -65,7 +65,7 @@ python -X utf8 scripts/verify_vectors.py
 ## Deployment
 
 Cloudflare Pages is recommended for the public static app: connect the repository, use `pnpm build`, and publish `dist/`.
-Vercel and GitHub Pages also work for the static output.
+Vercel also works for the static output; GitHub Pages works at a domain root (see [Self-hosting](#self-hosting) for the project-path caveat).
 Without the optional importer, the only runtime dependency is direct browser access to the chain-specific drand quicknet relays.
 
 ### Optional direct X integration
