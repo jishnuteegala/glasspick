@@ -13,6 +13,6 @@ It commits draw inputs before a future drand Quicknet round exists and produces 
 
 - No accounts, analytics, advertising, payments, or hosted user-generated content.
 - Entrant lists and draw records are processed locally in the browser.
-- Functional local storage preserves pending draws across refreshes.
+- Functional local storage preserves pending draws and the most recent completed draw across refreshes; starting a new draw clears it.
 - Browser requests to the public drand Quicknet relays provide randomness.
 - Direct X integration is self-hosted and requires the operator's own server-side X API key.
