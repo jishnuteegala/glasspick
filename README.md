@@ -147,7 +147,8 @@ The only runtime requirement is that visitors' browsers can reach the drand rela
 
 ### Managed static hosts
 
-Cloudflare Pages, Vercel, Netlify, and GitHub Pages can all serve the extracted bundle as a direct upload or output directory.
+Cloudflare Pages, Vercel, and Netlify can serve the extracted bundle as a direct upload or output directory.
+GitHub Pages works too, but only at a domain root (a custom domain or `<user>.github.io` repository); the bundle is built with base `/`, so a project-path deployment like `<user>.github.io/glasspick/` requires rebuilding from source with `base: "/glasspick/"` in `vite.config.ts`.
 Building from source instead of a release bundle works on any of them: build command `pnpm build`, output directory `dist/`.
 
 ### VPS (AWS, GCP, Azure, or any provider)
