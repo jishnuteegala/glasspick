@@ -128,11 +128,66 @@ GlassPick can record the final participant list used for a draw, but it cannot p
 The deployed subdomain should link to the shared privacy notice at `https://jishnuteegala.com/privacy` rather than duplicate it, but only after that notice's coverage list is updated for GlassPick.
 A separate privacy page and terms of service are not needed for the current product.
 
-## Self-hosted releases
+## Self-hosting
 
 The hosted site deploys continuously from `main`, while self-hosters should use a tagged GitHub Release rather than an arbitrary commit.
 Each release includes source archives from GitHub plus prebuilt `glasspick-<version>.zip` and `.tar.gz` static bundles with `SHA256SUMS`.
-Extract a bundle and publish its contents on any static host.
+
+Download a bundle, verify its checksum, and extract it:
+
+```sh
+curl -LO https://github.com/jishnuteegala/glasspick/releases/download/v<version>/glasspick-<version>.tar.gz
+curl -LO https://github.com/jishnuteegala/glasspick/releases/download/v<version>/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing
+mkdir glasspick && tar -xzf glasspick-<version>.tar.gz -C glasspick
+```
+
+The extracted bundle is a plain static site with hash-based navigation, so any static file server works with no rewrite or SPA-fallback rules.
+The only runtime requirement is that visitors' browsers can reach the drand relays (`https://api.drand.sh` and `https://drand.cloudflare.com`); if you add a Content-Security-Policy at your proxy or host, its `connect-src` must allow both, or draws and verification will fail.
+
+### Managed static hosts
+
+Cloudflare Pages, Vercel, Netlify, and GitHub Pages can all serve the extracted bundle as a direct upload or output directory.
+Building from source instead of a release bundle works on any of them: build command `pnpm build`, output directory `dist/`.
+
+### VPS (AWS, GCP, Azure, or any provider)
+
+Serve the extracted bundle with nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name glasspick.example.com;
+    root /var/www/glasspick;
+    index index.html;
+}
+```
+
+Or with Caddy, which also provisions TLS automatically:
+
+```caddy
+glasspick.example.com {
+    root * /var/www/glasspick
+    file_server
+}
+```
+
+### Docker
+
+Serve the extracted bundle with a static file server image:
+
+```dockerfile
+FROM nginx:alpine
+COPY glasspick/ /usr/share/nginx/html/
+```
+
+Or without a Dockerfile:
+
+```sh
+docker run -d -p 8080:80 -v "$PWD/glasspick:/usr/share/nginx/html:ro" nginx:alpine
+```
+
+### Releases
 
 Release Please maintains a reviewed release PR from Conventional Commits.
 Merging that PR creates the version tag, generated changelog, GitHub Release, and static bundles; GlassPick is not published to npm.
