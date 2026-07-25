@@ -89,16 +89,16 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
     </section>
     {error && <div role="alert" className="notice-fail">{error}</div>}
     {result && verifiedRecord && <section className="panel">
-      <h2 className={`text-base font-semibold ${result.state === "verified" ? "text-ok" : result.state === "local" ? "text-warn" : "text-fail"}`}>{headline}</h2>
-      <ul className="mt-4 space-y-3">{result.checks.map((check) => {
+      <h2 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${result.state === "verified" ? "status-chip-ok" : result.state === "local" ? "status-chip-warn" : "status-chip-fail"}`}><span aria-hidden="true">{result.state === "verified" ? "✓" : result.state === "local" ? "!" : "×"}</span>{headline}</h2>
+      <ul className="mt-5 space-y-4">{result.checks.map((check) => {
         const presentation = check.status === "pass"
-          ? { className: "text-ok", icon: "✓", label: "Pass" }
+          ? { chip: "status-chip-ok", text: "text-ok", icon: "✓", label: "Pass" }
           : check.status === "fail"
-            ? { className: "text-fail", icon: "×", label: "Fail" }
-            : { className: "text-warn", icon: "?", label: "Not confirmed" }
+            ? { chip: "status-chip-fail", text: "text-fail", icon: "×", label: "Fail" }
+            : { chip: "status-chip-warn", text: "text-warn", icon: "?", label: "Not confirmed" }
         return <li className="flex gap-3 text-sm" key={check.label}>
-          <span aria-hidden="true" className={presentation.className}>{presentation.icon}</span>
-          <div><div className="font-medium"><span className={presentation.className}>{presentation.label}:</span> {check.label}</div><div className="break-all font-mono text-muted">{check.detail}</div></div>
+          <span aria-hidden="true" className={`status-chip ${presentation.chip}`}>{presentation.icon}</span>
+          <div><div className="font-medium"><span className={presentation.text}>{presentation.label}:</span> {check.label}</div><div className="mt-0.5 break-all font-mono text-xs text-muted">{check.detail}</div></div>
         </li>
       })}</ul>
       <div className="mt-6 grid gap-5 sm:grid-cols-2"><div><h3 className="text-sm font-semibold">Winners</h3><p className="mt-1 text-sm">{verifiedRecord.winners.map((entry) => `@${entry.name}`).join(", ")}</p></div>
