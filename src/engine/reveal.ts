@@ -87,6 +87,17 @@ export function revealState(
   return { phase: "grace", secondsLeft: graceSecondsLeft }
 }
 
+export function formatCountdown(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds))
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  const pad = (value: number) => value.toString().padStart(2, "0")
+  if (hours > 0) return `${hours}:${pad(minutes)}:${pad(secs)}`
+  if (minutes > 0) return `${minutes}:${pad(secs)}`
+  return String(secs)
+}
+
 export function revealStatus(state: RevealState | null): string {
   if (!state) return "Synchronising with quicknet."
   if (state.phase === "countdown") {
