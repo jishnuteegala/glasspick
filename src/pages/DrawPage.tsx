@@ -44,11 +44,11 @@ export function LiveLinkDisclosure({
   onCopy: () => void
 }) {
   return <>
-    <label className="touch-option mt-3 max-w-xl text-sm">
+    <label className="touch-option max-w-xl text-sm text-muted">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       I understand the live reveal link publishes entrant names and weights to anyone who receives it.
     </label>
-    <button className="button-secondary" disabled={!checked} onClick={onCopy}>Copy entrant-revealing live link</button>
+    <button className="button-secondary mt-3" disabled={!checked} onClick={onCopy}>Copy entrant-revealing live link</button>
   </>
 }
 
@@ -339,7 +339,7 @@ export function DrawPage() {
   }
 
   const secondsLeft = pending ? Math.max(0, Math.ceil((estimateRoundTime(QUICKNET_SCHEDULE, pending.commitment.round) - now) / 1000)) : 0
-  const countInvalid = winnerCount + alternateCount > entries.length
+  const countInvalid = entries.length > 0 && winnerCount + alternateCount > entries.length
   return <div className="space-y-6">
     {!pending && !record && <section className="panel">
       <h1 className="text-base font-semibold">Run a draw</h1>
@@ -369,10 +369,12 @@ export function DrawPage() {
       <p className="mt-1 text-sm text-muted">Quicknet round {pending.commitment.round} fixes the public randomness for this draw.</p>
       <code className="hash">{pending.commitment.commitmentHash}</code>
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{secondsLeft > 0 ? "Commitment locked. Waiting for the selected Quicknet round." : "The selected Quicknet round is ready. You can run the draw."}</p>
-      <div className="mt-2 flex flex-wrap gap-3">
-        <LiveLinkDisclosure checked={liveDisclosure} onChange={setLiveDisclosure} onCopy={() => copyLink("live")} />
+      <div className="mt-5 flex flex-wrap gap-3">
         <button className="button-primary" disabled={busy || secondsLeft > 0} onClick={draw}>{secondsLeft ? `Available in ${secondsLeft}s` : busy ? "Checking..." : "Run draw"}</button>
         <button className="button-secondary" onClick={reset}>Cancel</button>
+      </div>
+      <div className="mt-5 border-t border-line pt-4">
+        <LiveLinkDisclosure checked={liveDisclosure} onChange={setLiveDisclosure} onCopy={() => copyLink("live")} />
       </div>
     </section>}
     {record && <div className="space-y-6">
