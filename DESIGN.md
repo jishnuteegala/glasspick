@@ -8,6 +8,7 @@ colors:
   primary: "#4f46e5"
   primary-hover: "#4338ca"
   primary-soft: "#eef2ff"
+  on-primary: "#ffffff"
   ink: "#0f1729"
   muted: "#55607a"
   line: "#e2e6ec"
@@ -66,7 +67,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
-    textColor: "#ffffff"
+    textColor: "{colors.on-primary}"
     rounded: "{rounded.control}"
     padding: "0.55rem 0.9rem"
   button-primary-hover:
@@ -114,6 +115,7 @@ A restrained cool palette: tinted greys carrying a single indigo accent, with a 
 
 ### Primary
 - **Indigo** (`#4f46e5`, dark `#7c78ff`): the only accent. Primary buttons, focus outlines, the current nav tab, and the brand mark. Its hover is **Indigo Deep** (`#4338ca`, dark `#918dff`); **Indigo Soft** (`#eef2ff`, dark `#1c2033`) tints file-button hovers and soft fills.
+- **On Indigo** (`#ffffff`, dark `#0b0f1a`): the text colour that sits on a primary-indigo fill. Light indigo takes white text; the lighter dark-mode indigo takes near-black text, so the primary button clears WCAG AA (5.5:1) instead of the 3.5:1 that white-on-light-indigo would give.
 
 ### Neutral
 - **Ink** (`#0f1729`, dark `#eef1f7`): primary text.
@@ -133,6 +135,8 @@ A restrained cool palette: tinted greys carrying a single indigo accent, with a 
 **The One Accent Rule.** Indigo is the only non-semantic colour. It appears on primary actions, the active tab, focus rings, and the brand mark, nowhere else. State colours are the only other saturated hues, and they are reserved for state.
 
 **The Both-Themes Rule.** Every colour is defined for light and dark. Never ship a token, component, or new surface that only works in one theme.
+
+**The Legible-Fill Rule.** Text on a saturated fill uses the `on-primary` token, never a hard-coded `#fff`. When a fill is light enough that white text drops below 4.5:1 (as the dark-theme indigo does), the token flips to near-black. Verify any new coloured-fill component against WCAG AA in both themes before shipping.
 
 ## 3. Typography
 

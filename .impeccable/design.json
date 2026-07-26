@@ -5,6 +5,7 @@
   "extensions": {
     "colorMeta": {
       "primary": { "role": "primary", "displayName": "Indigo", "canonical": "#4f46e5" },
+      "on-primary": { "role": "primary", "displayName": "On Indigo", "canonical": "#ffffff" },
       "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0f1729" },
       "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#55607a" },
       "bg": { "role": "neutral", "displayName": "Background", "canonical": "#f7f8fa" },
@@ -38,7 +39,7 @@
       "refersTo": "button-primary",
       "description": "The single call to action on a screen (Run draw, Verify, Load).",
       "html": "<button class=\"ds-btn-primary\">Run draw</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.55rem 0.9rem; border: none; border-radius: 0.5rem; background: var(--color-primary, #4f46e5); color: #fff; font: 500 0.875rem ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06); transition: background-color 150ms; } .ds-btn-primary:hover { background: var(--color-primary-hover, #4338ca); } .ds-btn-primary:active { transform: translateY(0.5px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: 2px; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.55rem 0.9rem; border: none; border-radius: 0.5rem; background: var(--color-primary, #4f46e5); color: var(--color-on-primary, #fff); font: 500 0.875rem ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06); transition: background-color 150ms; } .ds-btn-primary:hover { background: var(--color-primary-hover, #4338ca); } .ds-btn-primary:active { transform: translateY(0.5px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: 2px; }"
     },
     {
       "name": "Secondary Button",
@@ -94,6 +95,7 @@
     "rules": [
       { "name": "The One Accent Rule", "body": "Indigo is the only non-semantic colour: primary actions, active tab, focus rings, brand mark, nowhere else.", "section": "colors" },
       { "name": "The Both-Themes Rule", "body": "Every colour is defined for light and dark. Never ship a token or surface that only works in one theme.", "section": "colors" },
+      { "name": "The Legible-Fill Rule", "body": "Text on a saturated fill uses the on-primary token, never hard-coded #fff; it flips to near-black in dark mode so the primary button clears WCAG AA. Verify new coloured fills in both themes.", "section": "colors" },
       { "name": "The Fixed-Scale Rule", "body": "UI type sizes are a fixed rem scale, not fluid clamps. Fluid sizing is only for the two reveal-screen headings.", "section": "typography" },
       { "name": "The Mono-for-Proof Rule", "body": "Monospace is reserved for cryptographic and record data. Never use it for prose or labels.", "section": "typography" },
       { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat and separated by tint and 1px lines. Never exceed the two defined shadow values.", "section": "elevation" }
