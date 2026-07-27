@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "glasspick",
+  "compatibility_date": "2026-07-20",
+  "observability": {
+    "enabled": false,
+  },
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+  },
+}
