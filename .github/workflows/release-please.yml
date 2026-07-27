@@ -26,3 +26,4 @@ jobs:
       pull-requests: write
     with:
       recover-tag: ${{ inputs.recover_tag || '' }}
+    secrets: inherit
