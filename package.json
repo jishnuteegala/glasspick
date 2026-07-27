@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run && python -X utf8 scripts/verify_vectors.py",
