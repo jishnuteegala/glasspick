@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest"
 import { DrandMismatchError, DrandUnavailableError } from "./drand"
-import { chainNow, observeLatestRound, parseManualRound, pendingIdentity, relayFailureState, revealState, revealStatus, scheduleObservation, shouldAttemptRound } from "./reveal"
+import { chainNow, formatCountdown, observeLatestRound, parseManualRound, pendingIdentity, relayFailureState, revealState, revealStatus, scheduleObservation, shouldAttemptRound } from "./reveal"
+
+describe("format countdown", () => {
+  it("shows bare seconds under a minute and clock format above", () => {
+    expect(formatCountdown(0)).toBe("0")
+    expect(formatCountdown(9)).toBe("9")
+    expect(formatCountdown(59)).toBe("59")
+    expect(formatCountdown(60)).toBe("1:00")
+    expect(formatCountdown(605)).toBe("10:05")
+    expect(formatCountdown(3600)).toBe("1:00:00")
+    expect(formatCountdown(3661)).toBe("1:01:01")
+  })
+})
 
 describe("live reveal state", () => {
   it("moves from countdown through grace to unavailable", () => {

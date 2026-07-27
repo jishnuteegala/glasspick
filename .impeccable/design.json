@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-26T00:00:00.000Z",
+  "title": "Design System: GlassPick",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Indigo", "canonical": "#4f46e5" },
+      "on-primary": { "role": "primary", "displayName": "On Indigo", "canonical": "#ffffff" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0f1729" },
+      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#55607a" },
+      "bg": { "role": "neutral", "displayName": "Background", "canonical": "#f7f8fa" },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#ffffff" },
+      "ok": { "role": "tertiary", "displayName": "OK Green", "canonical": "#047857" },
+      "warn": { "role": "tertiary", "displayName": "Warn Amber", "canonical": "#a25a07" },
+      "fail": { "role": "tertiary", "displayName": "Fail Red", "canonical": "#c62828" },
+      "info": { "role": "tertiary", "displayName": "Info Indigo", "canonical": "#3730a3" }
+    },
+    "typographyMeta": {
+      "countdown": { "displayName": "Countdown", "purpose": "Live-reveal timer; the one intentionally large element, set in mono to read as a machine-timed instrument." },
+      "winner-name": { "displayName": "Winner Name", "purpose": "Display-scale winner list on the live reveal; the single moment of warmth." },
+      "page-title": { "displayName": "Page Title", "purpose": "Panel h1 on Draw, Verify, How-it-works." },
+      "body": { "displayName": "Body", "purpose": "Default copy and controls." },
+      "mono": { "displayName": "Mono", "purpose": "Hashes, randomness, record JSON, plus the live-reveal countdown and winner-rank markers." }
+    },
+    "shadows": [
+      { "name": "panel", "value": "0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06)", "purpose": "Resting panels and the primary button." },
+      { "name": "raised", "value": "0 4px 12px rgb(15 23 41 / .08), 0 2px 4px rgb(15 23 41 / .05)", "purpose": "Genuinely lifted surfaces only." }
+    ],
+    "motion": [
+      { "name": "control-transition", "value": "150ms", "purpose": "Border, colour, and background state transitions on controls." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single call to action on a screen (Run draw, Verify, Load).",
+      "html": "<button class=\"ds-btn-primary\">Run draw</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.55rem 0.9rem; border: none; border-radius: 0.5rem; background: var(--color-primary, #4f46e5); color: var(--color-on-primary, #fff); font: 500 0.875rem ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06); transition: background-color 150ms; } .ds-btn-primary:hover { background: var(--color-primary-hover, #4338ca); } .ds-btn-primary:active { transform: translateY(0.5px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-emphasis action beside the primary.",
+      "html": "<button class=\"ds-btn-secondary\">Copy link</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.55rem 0.9rem; border: 1px solid var(--color-line-strong, #cdd3dd); border-radius: 0.5rem; background: var(--color-surface, #fff); color: var(--color-ink, #0f1729); font: 500 0.875rem ui-sans-serif, system-ui, sans-serif; transition: background-color 150ms; } .ds-btn-secondary:hover { background: var(--color-surface-sunken, #f2f4f7); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Control (text input)",
+      "kind": "input",
+      "refersTo": "control",
+      "description": "Standard field used for inputs and textareas.",
+      "html": "<input class=\"ds-control\" placeholder=\"alice\" />",
+      "css": ".ds-control { width: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line-strong, #cdd3dd); border-radius: 0.5rem; background: var(--color-surface, #fff); color: var(--color-ink, #0f1729); font: 400 0.875rem ui-sans-serif, system-ui, sans-serif; transition: border-color 150ms; } .ds-control::placeholder { color: var(--color-muted, #55607a); } .ds-control:focus-visible { border-color: var(--color-primary, #4f46e5); outline: 2px solid var(--color-primary, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The single container that frames each task.",
+      "html": "<section class=\"ds-panel\"><h1>Run a draw</h1></section>",
+      "css": ".ds-panel { padding: 1.5rem; border: 1px solid var(--color-line, #e2e6ec); border-radius: 0.875rem; background: var(--color-surface, #fff); box-shadow: 0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06); } .ds-panel h1 { margin: 0; font: 600 1rem ui-sans-serif, system-ui, sans-serif; color: var(--color-ink, #0f1729); }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Per-check result badge and headline verification pill.",
+      "html": "<span class=\"ds-chip ds-chip-ok\">\u2713</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; justify-content: center; width: 1.375rem; height: 1.375rem; border-radius: 9999px; font: 700 0.75rem ui-sans-serif, system-ui, sans-serif; line-height: 1; } .ds-chip-ok { background: var(--color-ok-bg, #ecfdf5); color: var(--color-ok, #047857); }"
+    },
+    {
+      "name": "Nav Tab",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Top navigation tab; active tab carries an indigo underline.",
+      "html": "<button class=\"ds-nav-tab ds-nav-tab-active\">Draw</button>",
+      "css": ".ds-nav-tab { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.125rem; border: none; border-bottom: 2px solid transparent; background: none; color: var(--color-muted, #55607a); font: 400 0.875rem ui-sans-serif, system-ui, sans-serif; transition: color 150ms, border-color 150ms; } .ds-nav-tab:hover { color: var(--color-ink, #0f1729); } .ds-nav-tab-active { border-color: var(--color-primary, #4f46e5); color: var(--color-ink, #0f1729); font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Verifiable Instrument",
+    "overview": "GlassPick looks like a precision instrument, not a game of chance. The system serves a task that lives or dies on trust, so the interface is quiet, legible, and deliberately unremarkable: a single indigo accent on a cool near-white field, one typeface family, panels with soft borders and the faintest lift. Nothing competes with the numbers, hashes, and rules that make a draw provable. It rejects every visual cue of gambling and lottery products and the generic AI-tool palette; restraint is the brand. The one place the system permits warmth is the winner reveal.",
+    "keyCharacteristics": [
+      "One accent (indigo), used only for actions, selection, and state, never decoration.",
+      "One typeface family; a monospace face reserved for cryptographic data.",
+      "Cool, tinted neutrals on a near-white field; a matching dark theme.",
+      "Soft-bordered panels with a whisper of elevation; flat by default.",
+      "Familiar, standard controls; density where the task needs it."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Indigo is the only non-semantic colour: primary actions, active tab, focus rings, brand mark, nowhere else.", "section": "colors" },
+      { "name": "The Both-Themes Rule", "body": "Every colour is defined for light and dark. Never ship a token or surface that only works in one theme.", "section": "colors" },
+      { "name": "The Legible-Fill Rule", "body": "Text on a saturated fill uses the on-primary token, never hard-coded #fff; it flips to near-black in dark mode so the primary button clears WCAG AA. Verify new coloured fills in both themes.", "section": "colors" },
+      { "name": "The Fixed-Scale Rule", "body": "UI type sizes are a fixed rem scale, not fluid clamps. Fluid sizing is only for the two reveal-screen headings.", "section": "typography" },
+      { "name": "The Mono-for-Proof Rule", "body": "Monospace is reserved for cryptographic and record data. Never use it for prose or labels.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat and separated by tint and 1px lines. Never exceed the two defined shadow values.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep indigo (#4f46e5) as the sole accent: actions, selection, focus, brand mark.",
+      "Do define every new colour and component for both light and dark themes.",
+      "Do use the fixed rem type scale for UI; reserve fluid sizing for the two reveal headings.",
+      "Do render hashes, randomness, and records in the monospace face.",
+      "Do keep interactive targets at at least 2.75rem and preserve the 2px indigo focus outline.",
+      "Do honour prefers-reduced-motion, including suppressing the reveal confetti.",
+      "Do state plainly what a draw proves and what it does not, at the point of action."
+    ],
+    "donts": [
+      "Don't introduce a second accent hue, or use saturated colour on inactive states.",
+      "Don't use gambling or lottery cues: coin-gold, spinning wheels, slot-machine framing, or manufactured suspense.",
+      "Don't reach for generic AI-tool patterns: hero-metric templates, identical icon-heading-text card grids, gradient text, or glassmorphism.",
+      "Don't use coloured side-stripe borders on notices or cards; use full borders and semantic backgrounds.",
+      "Don't nest cards, or exceed the two defined shadow values.",
+      "Don't use the monospace face for prose or labels, or display-scale headings for ordinary UI.",
+      "Don't imply guarantees GlassPick does not make (eligibility, list completeness, legal compliance)."
+    ]
+  }
+}

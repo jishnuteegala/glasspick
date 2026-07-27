@@ -1,9 +1,18 @@
 import confetti from "canvas-confetti"
-import { useEffect, useEffectEvent, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useRef, useState, type CSSProperties } from "react"
+import { flushSync } from "react-dom"
 import { estimateRoundTime, fetchChainInfo, fetchLatestRound, fetchMatchingRound, fetchRound, QUICKNET_SCHEDULE } from "../engine/drand"
 import { runDraw, type DrawRecord, type PendingDraw, type WeightedEntry } from "../engine/draw"
 import { createGenerationGuard } from "../engine/generation"
-import { chainNow, observeLatestRound, parseManualRound, relayFailureState, revealState, revealStatus, scheduleObservation, shouldAttemptRound, type RelayState, type RoundObservation } from "../engine/reveal"
+import { chainNow, formatCountdown, observeLatestRound, parseManualRound, relayFailureState, revealState, revealStatus, scheduleObservation, shouldAttemptRound, type RelayState, type RoundObservation } from "../engine/reveal"
+
+function revealTransition(apply: () => void) {
+  if (typeof document !== "undefined" && "startViewTransition" in document && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.startViewTransition(() => flushSync(apply))
+    return
+  }
+  apply()
+}
 
 export function WinnerAnnouncement({ winners }: { winners: WeightedEntry[] }) {
   const label = winners.length === 1 ? "Winner" : "Winners"
@@ -47,7 +56,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
         : await fetchRound(pending.commitment.round, undefined, controller.signal)
       const result = await runDraw(pending.commitment, round.randomness)
       if (!generation.current.isCurrent(current)) return
-      setRecord(result); setRelay("verified")
+      revealTransition(() => { setRecord(result); setRelay("verified") })
       if (!celebrated.current && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
         celebrated.current = true
         void confetti({ particleCount: 72, spread: 54, origin: { y: 0.7 }, disableForReducedMotion: true })
@@ -119,7 +128,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
       const data = parseManualRound(manual, pending.commitment.round)
       const result = await runDraw(pending.commitment, data.randomness)
       if (!generation.current.isCurrent(current)) return
-      setRecord(result); setRelay("manual")
+      revealTransition(() => { setRecord(result); setRelay("manual") })
     } catch (caught) {
       if (generation.current.isCurrent(current)) {
         setManualError(caught instanceof Error ? caught.message : "Invalid manual beacon")
@@ -127,20 +136,23 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
     }
   }
 
+  const countdownProgress = state?.phase === "countdown"
+    ? Math.min(1, Math.max(0, 1 - Math.min(state.secondsLeft, 60) / 60))
+    : 1
   return <main id="live-reveal" className="reveal-shell flex-1">
-    <p className="text-sm text-muted">GlassPick live reveal</p>
-    <h1 className="mt-3 text-2xl font-semibold sm:text-4xl">Quicknet round {pending.commitment.round}</h1>
-    <code className="hash mt-6 max-w-3xl">{pending.commitment.commitmentHash}</code>
+    <p className="reveal-eyebrow">GlassPick live reveal</p>
+    <h1 className="reveal-round">Quicknet round {pending.commitment.round}</h1>
+    <div className="commit-frame"><span>Committed before this round existed</span><code>{pending.commitment.commitmentHash}</code></div>
     <WinnerAnnouncement winners={record?.winners ?? []} />
     <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{revealStatus(state)}</p>
-    {state?.phase === "countdown" && <p className="mt-12 text-6xl font-semibold tabular-nums sm:text-8xl">{state.secondsLeft}</p>}
+    {state?.phase === "countdown" && <div className="countdown-readout" style={{ viewTransitionName: "reveal-focus" }}><p className="label">Draw opens in</p><p className="countdown-number" key={state.secondsLeft}>{formatCountdown(state.secondsLeft)}</p><span className="countdown-track"><span className="countdown-fill" style={{ transform: `scaleX(${countdownProgress})` }} /></span></div>}
     {state?.phase === "checking" && <p className="mt-12 text-xl">Checking both quicknet relays...</p>}
     {state?.phase === "grace" && <p className="mt-12 text-xl">The round is due. Retrying both quicknet relays for up to 30 seconds ({state.secondsLeft}s remaining)...</p>}
-    {(state?.phase === "verified" || state?.phase === "manual") && record && <section className="mt-10 w-full max-w-2xl">
-      <p role="status" className={`text-sm font-medium ${state.phase === "verified" ? "text-ok" : "text-warn"}`}>{state.phase === "verified" ? "Confirmed against quicknet" : "Manual beacon is unverified until a relay confirms it"}</p>
+    {(state?.phase === "verified" || state?.phase === "manual") && record && <section className="winner-reveal" style={{ viewTransitionName: "reveal-focus" }}>
+      <p role="status" className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${state.phase === "verified" ? "status-chip-ok" : "status-chip-warn"}`}><span aria-hidden="true">{state.phase === "verified" ? "✓" : "!"}</span>{state.phase === "verified" ? "Confirmed against quicknet" : "Manual beacon is unverified until a relay confirms it"}</p>
       {state.phase === "manual" && <button className="button-secondary mt-4" onClick={checkRound}>Retry relays</button>}
-      <h2 className="mt-4 text-xl font-semibold">Winner{record.winners.length === 1 ? "" : "s"}</h2>
-      <ol className="mt-3 divide-y divide-line border-y border-line text-left">{record.winners.map((entry, index) => <li className="flex gap-4 py-4 text-lg" key={entry.name}><span className="text-muted">{index + 1}.</span><strong>@{entry.name}</strong></li>)}</ol>
+      <h2 className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-muted">Winner{record.winners.length === 1 ? "" : "s"}</h2>
+      <ol className="winner-list">{record.winners.map((entry, index) => <li key={entry.name} style={{ "--i": index } as CSSProperties}><span className="rank">{index + 1}</span><strong>@{entry.name}</strong></li>)}</ol>
     </section>}
     {(state?.phase === "unavailable" || state?.phase === "mismatch") && <section className="mt-10 w-full max-w-xl text-left">
       <div role={state.phase === "mismatch" ? "alert" : "status"} className={state.phase === "mismatch" ? "notice-fail" : "notice-warn"}>{state.phase === "mismatch" ? "The supplied beacon does not match this draw." : "Quicknet is unavailable after the 30-second grace period."}</div>
