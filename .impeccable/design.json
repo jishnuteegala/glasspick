@@ -16,10 +16,11 @@
       "info": { "role": "tertiary", "displayName": "Info Indigo", "canonical": "#3730a3" }
     },
     "typographyMeta": {
-      "countdown": { "displayName": "Countdown", "purpose": "Live-reveal timer; the one intentionally large element." },
+      "countdown": { "displayName": "Countdown", "purpose": "Live-reveal timer; the one intentionally large element, set in mono to read as a machine-timed instrument." },
+      "winner-name": { "displayName": "Winner Name", "purpose": "Display-scale winner list on the live reveal; the single moment of warmth." },
       "page-title": { "displayName": "Page Title", "purpose": "Panel h1 on Draw, Verify, How-it-works." },
       "body": { "displayName": "Body", "purpose": "Default copy and controls." },
-      "mono": { "displayName": "Mono", "purpose": "Hashes, randomness, and record JSON only." }
+      "mono": { "displayName": "Mono", "purpose": "Hashes, randomness, record JSON, plus the live-reveal countdown and winner-rank markers." }
     },
     "shadows": [
       { "name": "panel", "value": "0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06)", "purpose": "Resting panels and the primary button." },

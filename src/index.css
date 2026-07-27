@@ -101,6 +101,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
 .status-chip-fail { background: var(--color-fail-bg); color: var(--color-fail); }
 .status-chip-warn { background: var(--color-warn-bg); color: var(--color-warn); }
 .reveal-shell { display: flex; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; text-align: center; }
+.reveal-eyebrow { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--color-primary); }
+.reveal-round { margin-top: .5rem; font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+.commit-frame { margin-top: 1.5rem; width: 100%; max-width: 34rem; text-align: left; }
+.commit-frame > span { display: block; font-size: .75rem; font-weight: 600; letter-spacing: 0.02em; color: var(--color-primary); }
+.commit-frame > code { display: block; margin-top: .375rem; overflow-wrap: anywhere; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-surface-sunken); padding: .75rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .75rem; color: var(--color-ink); line-height: 1.5; }
+.countdown-readout { margin-top: 3rem; display: flex; flex-direction: column; align-items: center; }
+.countdown-readout > .label { margin-top: 0; font-size: .875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; color: var(--color-muted); }
+.countdown-number { margin-top: .75rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(4rem, 15vw, 6.5rem); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; line-height: 1; color: var(--color-ink); }
+.countdown-track { margin-top: 1.5rem; height: 2px; width: min(22rem, 80vw); border-radius: 9999px; background: var(--color-line); overflow: hidden; }
+.countdown-fill { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); transform-origin: left; transition: transform 1000ms linear; }
+.winner-reveal { margin-top: 2.5rem; width: 100%; max-width: 40rem; }
+.winner-list { margin-top: 1.25rem; text-align: left; }
+.winner-list > li { display: flex; align-items: baseline; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--color-line); font-size: clamp(1.5rem, 5vw, 2.25rem); font-weight: 600; letter-spacing: -0.02em; }
+.winner-list > li:last-child { border-bottom: 1px solid var(--color-line); }
+.winner-list > li > .rank { flex: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .875rem; font-weight: 500; color: var(--color-muted); align-self: center; min-width: 1.5rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .countdown-number { animation: countdown-tick 1000ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .winner-list > li { animation: winner-settle 640ms cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: calc(var(--i, 0) * 90ms); }
+}
+@keyframes countdown-tick { from { opacity: .55; transform: translateY(-0.08em); } to { opacity: 1; transform: none; } }
+@keyframes winner-settle { from { opacity: 0; transform: translateY(0.5rem) scale(0.97); } to { opacity: 1; transform: none; } }
+::view-transition-group(reveal-focus) { animation-duration: 520ms; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
 .skip-link { position: fixed; top: .5rem; left: .5rem; z-index: 50; transform: translateY(-200%); border-radius: var(--radius-control); background: var(--color-ink); padding: .625rem .875rem; color: var(--color-bg); }
 .skip-link:focus { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }

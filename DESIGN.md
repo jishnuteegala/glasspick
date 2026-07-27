@@ -146,7 +146,8 @@ A restrained cool palette: tinted greys carrying a single indigo accent, with a 
 **Character:** No brand typeface. The interface uses the platform's own UI sans for everything and a monospace face only for machine data, so text renders natively and cryptographic values are unambiguous. Product UI does not need display/body pairing.
 
 ### Hierarchy
-- **Countdown** (600, `clamp(3.75rem, 12vw, 6rem)`, tabular-nums): the live-reveal timer, the one intentionally large element in the system.
+- **Countdown** (600, mono, `clamp(4rem, 15vw, 6.5rem)`, tabular-nums, letter-spacing -0.03em): the live-reveal timer, the one intentionally large element in the system. Set in the monospace face so it reads as a machine-timed instrument, not a lifestyle clock.
+- **Winner Name** (600, `clamp(1.5rem, 5vw, 2.25rem)`, letter-spacing -0.02em): the winner list on the live-reveal screen; display scale is the single moment of warmth the system permits.
 - **Reveal Title** (600, `clamp(1.5rem, 4vw, 2.25rem)`): the round heading on the live-reveal screen.
 - **Page Title** (600, `1rem`): the `h1` on Draw, Verify, and How-it-works panels. Deliberately modest; the panel, not the heading, frames the task.
 - **Section Heading** (600, `0.875rem`): `h2`/`h3` inside panels (Winners, Alternates, Share and verify).
@@ -158,7 +159,7 @@ A restrained cool palette: tinted greys carrying a single indigo accent, with a 
 ### Named Rules
 **The Fixed-Scale Rule.** Type sizes are a fixed rem scale (0.75 / 0.875 / 1rem for UI), not fluid clamps. Fluid sizing is permitted only for the two reveal-screen headings, where scale is the point.
 
-**The Mono-for-Proof Rule.** Monospace is reserved for cryptographic and record data (hashes, randomness, JSON). Never use it for prose or labels.
+**The Mono-for-Proof Rule.** Monospace is reserved for cryptographic and record data (hashes, randomness, JSON) and for the live-reveal countdown and winner-rank markers, where it signals a machine-timed, machine-derived result. Never use it for prose or labels.
 
 ## 4. Elevation
 
@@ -203,17 +204,22 @@ Flat by default. Depth is carried mainly by tinted layering, background → surf
 - The favicon and PWA icons share one motif: an indigo (`#4f46e5`) rounded square holding a white ring with a centred dot, mirroring the header lockup. The in-app header uses the same indigo square with a white "G".
 
 ### Live Reveal (signature)
-- A full-height centred column: eyebrow, round title, a large tabular-nums countdown, then the winner list. On confirmation a brief confetti burst fires once, suppressed under `prefers-reduced-motion`. This is the only choreographed moment in the product.
+- A full-height centred column: an indigo eyebrow, round title, then the **commitment frame** (`.commit-frame`: an indigo "Committed before this round existed" label above the full-bordered mono hash on a sunken fill), the **countdown readout**, and finally the winner list. This is the product's focal surface and its one choreographed moment; the composition leads with the countdown and resolves into the winners.
+- **Commitment frame.** Foregrounds the trust claim rather than hiding the hash in a muted block. Full 1px border only — never a coloured side-stripe. The indigo label carries the accent (≥5.4:1 both themes).
+- **Countdown readout** (`.countdown-readout`). The monospace tabular countdown is the decisive lead. Beneath it a 2px indigo **progress hairline** (`.countdown-track` / `.countdown-fill`) closes over the final 60 seconds, conveying state, not decoration; it honours the One Accent Rule.
+- **Winner list** (`.winner-list`). Display-scale names with a monospace rank marker and hairline rules top and bottom; the single warm moment.
+- **Motion.** On confirmation a brief confetti burst fires once. Where supported, the countdown→winners state change runs through a View Transition (`::view-transition-group(reveal-focus)`) so the readout morphs into the winners, and each winner **settles** in with a short staggered spring-eased entrance. Each second the countdown digit does a subtle tick. All reveal motion is gated behind `@media (prefers-reduced-motion: no-preference)` and the View Transition is skipped under reduced motion; the static reveal stays fully legible and the confetti is suppressed.
 
 ## 6. Do's and Don'ts
 
 ### Do:
 - **Do** keep indigo (`#4f46e5`) as the sole accent: actions, selection, focus, brand mark.
 - **Do** define every new colour and component for both light and dark themes.
-- **Do** use the fixed rem type scale for UI; reserve fluid sizing for the two reveal headings.
+- **Do** use the fixed rem type scale for UI; reserve fluid sizing and display scale for the live-reveal surface (countdown, round title, winner names).
 - **Do** render hashes, randomness, and records in the monospace face.
 - **Do** keep interactive targets at ≥2.75rem and preserve the 2px indigo focus outline.
-- **Do** honour `prefers-reduced-motion`, including suppressing the reveal confetti.
+- **Do** honour `prefers-reduced-motion`, including suppressing the reveal confetti, the winner-settle stagger, the countdown tick, and the View Transition; the static reveal must stay fully legible.
+- **Do** treat the live reveal as the product's one focal surface: lead with the countdown and resolve into the winners; keep every other surface quiet.
 - **Do** state plainly what a draw proves and what it does not, at the point of action.
 
 ### Don't:
