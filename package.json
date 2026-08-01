@@ -9,6 +9,7 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "verify:preview": "node scripts/verify-preview.mjs",
     "test": "vitest run && python -X utf8 scripts/verify_vectors.py",
     "typecheck": "tsc -b"
   },
