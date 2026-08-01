@@ -36,7 +36,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-bg: #0b0f1a;
     --color-surface: #131a29;
     --color-surface-sunken: #0f1522;

@@ -3,15 +3,16 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import { tokenInventory } from "./tokens"
 
-function themeCustomProperties(css: string): string[][] {
-  const blocks: string[][] = []
-  for (const match of css.matchAll(/@theme\s*\{/g)) {
-    const blockStart = match.index! + match[0].length
-    const blockEnd = css.indexOf("}", blockStart)
-    const block = css.slice(blockStart, blockEnd)
-    blocks.push([...block.matchAll(/(--[\w-]+)\s*:/g)].map((property) => property[1]))
-  }
-  return blocks
+function customProperties(block: string): string[] {
+  return [...block.matchAll(/(--[\w-]+)\s*:/g)].map((property) => property[1])
+}
+
+function blockContents(css: string, selector: RegExp): string {
+  const match = selector.exec(css)
+  if (!match?.index) throw new Error(`Missing CSS block: ${selector}`)
+  const blockStart = match.index + match[0].length
+  const blockEnd = css.indexOf("}", blockStart)
+  return css.slice(blockStart, blockEnd)
 }
 
 function duplicates(names: readonly string[]): string[] {
@@ -26,7 +27,10 @@ function duplicates(names: readonly string[]): string[] {
 
 describe("token inventory drift", () => {
   const css = readFileSync(fileURLToPath(new URL("./index.css", import.meta.url)), "utf8")
-  const [declared, ...overrides] = themeCustomProperties(css)
+  const declared = customProperties(blockContents(css, /@theme\s*\{/))
+  const darkOverrides = customProperties(
+    blockContents(css, /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{/),
+  )
 
   it("declares no duplicate custom properties in the primary @theme block", () => {
     expect(duplicates(declared)).toEqual([])
@@ -44,10 +48,9 @@ describe("token inventory drift", () => {
     expect({ missing, extra }).toEqual({ missing: [], extra: [] })
   })
 
-  it("keeps @theme overrides within the primary token set", () => {
+  it("keeps dark overrides within the primary token set", () => {
     const declaredSet = new Set(declared)
-    expect(overrides.map((override) => override.filter((name) => !declaredSet.has(name)))).toEqual(
-      overrides.map(() => []),
-    )
+    expect(duplicates(darkOverrides)).toEqual([])
+    expect(darkOverrides.filter((name) => !declaredSet.has(name))).toEqual([])
   })
 })
