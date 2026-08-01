@@ -3,6 +3,7 @@ import { decodeHash } from "./engine/envelope"
 import type { PendingDraw } from "./engine/draw"
 import { pendingIdentity } from "./engine/reveal"
 import { DrawPage } from "./pages/DrawPage"
+import { DesignSystemPage } from "./pages/DesignSystemPage"
 import { HowItWorksPage } from "./pages/HowItWorksPage"
 import { LiveRevealPage } from "./pages/LiveRevealPage"
 import { VerifyPage } from "./pages/VerifyPage"
@@ -10,16 +11,18 @@ import { VerifyPage } from "./pages/VerifyPage"
 type Tab = "draw" | "verify" | "how"
 
 function SiteFooter() {
-  return <footer className="border-t border-line bg-surface"><div className="mx-auto flex max-w-3xl flex-col gap-2 px-4 py-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>© {new Date().getFullYear()} Jishnu Teegala</span><nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2"><a className="hover:text-ink" href="https://jishnuteegala.com/privacy">Privacy</a><a className="hover:text-ink" href="https://github.com/jishnuteegala/glasspick">Source code</a></nav></div></footer>
+  return <footer className="border-t border-line bg-surface"><div className="mx-auto flex max-w-3xl flex-col gap-2 px-4 py-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>© {new Date().getFullYear()} Jishnu Teegala</span><nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2"><a className="hover:text-ink" href="/design-system">Design system</a><a className="hover:text-ink" href="https://jishnuteegala.com/privacy">Privacy</a><a className="hover:text-ink" href="https://github.com/jishnuteegala/glasspick">Source code</a></nav></div></footer>
 }
 
 export default function App() {
+  const designSystem = location.pathname === "/design-system"
   const [tab, setTab] = useState<Tab>(location.hash.startsWith("#gp1=") ? "verify" : "draw")
   const [hash, setHash] = useState(location.hash)
   const [pending, setPending] = useState<PendingDraw | null>(null)
   const [hashError, setHashError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (designSystem) return
     let generation = 0
     async function processHash() {
       const current = ++generation
@@ -33,7 +36,9 @@ export default function App() {
     }
     void processHash(); addEventListener("hashchange", processHash)
     return () => removeEventListener("hashchange", processHash)
-  }, [])
+  }, [designSystem])
+
+  if (designSystem) return <div className="flex min-h-screen flex-col"><a className="skip-link" href="#main-content">Skip to main content</a><header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><strong>GlassPick</strong></div><a className="text-sm text-muted hover:text-ink" href="/">Back to app</a></div></header><main id="main-content" className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"><DesignSystemPage /></main><SiteFooter /></div>
 
   if (pending) {
     const clean = new URLSearchParams(location.search).has("clean")

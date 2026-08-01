@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+:root {
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f2f4f7;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-on-primary: #ffffff;
+  --color-ink: #0f1729;
+  --color-muted: #55607a;
+  --color-line: #e2e6ec;
+  --color-line-strong: #cdd3dd;
+  --color-ok: #047857;
+  --color-warn: #a25a07;
+  --color-fail: #c62828;
+  --color-info: #3730a3;
+  --color-info-line: #c7d2fe;
+  --color-info-bg: #eef2ff;
+  --color-ok-line: #a7f3d0;
+  --color-ok-bg: #ecfdf5;
+  --color-warn-line: #fcd996;
+  --color-warn-bg: #fefaf0;
+  --color-fail-line: #fecaca;
+  --color-fail-bg: #fef2f2;
+  --radius-control: .5rem;
+  --radius-panel: .875rem;
+  --size-touch-target: 2.75rem;
+  --text-control: .875rem;
+  --space-panel: 1.5rem;
+  --space-control-x: .75rem;
+  --space-control-y: .625rem;
+  --shadow-panel: 0 1px 2px rgb(15 23 41 / .04), 0 1px 3px rgb(15 23 41 / .06);
+  --shadow-raised: 0 4px 12px rgb(15 23 41 / .08), 0 2px 4px rgb(15 23 41 / .05);
+}
+
 @theme {
   --color-bg: #f7f8fa;
   --color-surface: #ffffff;
