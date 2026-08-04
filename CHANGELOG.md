@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jishnuteegala/glasspick/compare/v0.1.0...v0.1.1) (2026-08-04)
+
+
+### Features
+
+* record docs, build, and ci commits in changelogs ([#25](https://github.com/jishnuteegala/glasspick/issues/25)) ([ef6a837](https://github.com/jishnuteegala/glasspick/commit/ef6a837e7c144f864fe5d7da2454f3a62a10bd32))
+
 ## 0.1.0 (2026-08-03)
 
 
