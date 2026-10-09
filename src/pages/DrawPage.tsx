@@ -271,6 +271,7 @@ export function DrawPage() {
   }
 
   async function copyLink(kind: "stub" | "full" | "live") {
+    setError(null)
     try {
       let hash = ""
       if (kind === "live" && pending) hash = await createPendingEnvelope(pending)
@@ -342,6 +343,7 @@ export function DrawPage() {
       }
     })
     setPending(null); setRecord(null); setError(null); setBusy(false); setLoadingImport(false); setXProvenance(null)
+    setCopied(null); if (copiedTimer.current) clearTimeout(copiedTimer.current)
     setFullDisclosure(disclosure.full); setLiveDisclosure(disclosure.live)
   }
 

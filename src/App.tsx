@@ -25,10 +25,11 @@ export default function App() {
     let generation = 0
     async function processHash() {
       const current = ++generation
-      const isDesignSystem = location.hash === "#design-system"
-      setDesignSystem(isDesignSystem)
-      setHash(location.hash); setHashError(null); setPending(null)
-      if (isDesignSystem) return
+      const next = location.hash
+      if (next !== "" && next !== "#design-system" && !/^#gpp?\d+=/.test(next)) return
+      setDesignSystem(next === "#design-system")
+      setHash(next); setHashError(null); setPending(null)
+      if (next === "#design-system") return
       try {
         const envelope = await decodeHash(location.hash)
         if (current !== generation) return
