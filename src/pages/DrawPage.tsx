@@ -14,6 +14,7 @@ import { randomNonceHex, sha256Hex } from "../engine/hash"
 import { PENDING_KEY } from "../engine/pending"
 import { fetchXEntrants, parseXPostUrl, X_SOURCES, type XImportResponse, type XProvenanceReceipt, type XSource } from "../x-integration"
 import { resetDisclosureAcknowledgements } from "./draw-page-state"
+import { envelopeUrl } from "../routes"
 import { PROVENANCE_KEY, RECORD_KEY, restoreDrawState } from "./draw-restore"
 import { withDrawStateLock } from "../engine/draw-state-lock"
 
@@ -276,7 +277,7 @@ export function DrawPage() {
       if (kind === "live" && pending) hash = await createPendingEnvelope(pending)
       if (kind === "stub" && record) hash = createStub(record)
       if (kind === "full" && record) hash = await createFullEnvelope(record)
-      const url = `${location.origin}${location.pathname}${hash}`
+      const url = envelopeUrl(hash)
       if (url.length > 16_000) throw new Error("Generated URL exceeds the 16,000-character safety limit")
       try { await navigator.clipboard.writeText(url) } catch { throw new Error("Could not copy the link to the clipboard") }
       setError(null)

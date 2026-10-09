@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react"
-import { decodeHash } from "./engine/envelope"
-import { isRouteHash } from "./routes"
-import type { PendingDraw } from "./engine/draw"
 import { pendingIdentity } from "./engine/reveal"
+import { seededTab, useRoute } from "./routes"
 import { DrawPage } from "./pages/DrawPage"
 import { DesignSystemPage } from "./pages/DesignSystemPage"
 import { HowItWorksPage } from "./pages/HowItWorksPage"
@@ -26,35 +24,14 @@ function SiteFooter() {
 }
 
 export default function App() {
-  const [designSystem, setDesignSystem] = useState(() => location.hash === "#design-system")
-  const [tab, setTab] = useState<Tab>(location.hash.startsWith("#gp1=") ? "verify" : "draw")
-  const [hash, setHash] = useState(location.hash)
-  const [pending, setPending] = useState<PendingDraw | null>(null)
-  const [hashError, setHashError] = useState<string | null>(null)
+  const route = useRoute()
+  const [tab, setTab] = useState<Tab>(() => seededTab(location.hash))
+  useEffect(() => { if (route.kind === "proof" || route.kind === "link-error") setTab("verify") }, [route])
 
-  useEffect(() => {
-    let generation = 0
-    async function processHash() {
-      const current = ++generation
-      const next = location.hash
-      if (!isRouteHash(next)) return
-      setDesignSystem(next === "#design-system")
-      setHash(next); setHashError(null); setPending(null)
-      if (next === "" || next === "#design-system") return
-      try {
-        const envelope = await decodeHash(next)
-        if (current !== generation) return
-        if (envelope?.type === "pending") setPending(envelope.pending)
-        if (envelope?.type === "stub" || envelope?.type === "full") setTab("verify")
-      } catch (caught) { if (current === generation) setHashError(caught instanceof Error ? caught.message : "Invalid link") }
-    }
-    void processHash(); addEventListener("hashchange", processHash)
-    return () => removeEventListener("hashchange", processHash)
-  }, [])
+  if (route.kind === "design") return <div id="design-system" className="flex min-h-screen flex-col"><SkipLink target="main-content" label="Skip to main content" /><header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><strong>GlassPick</strong></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="#">Back to app</a></div></header><main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"><DesignSystemPage /></main><SiteFooter /></div>
 
-  if (designSystem) return <div className="flex min-h-screen flex-col"><SkipLink target="main-content" label="Skip to main content" /><header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><strong>GlassPick</strong></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="#">Back to app</a></div></header><main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"><DesignSystemPage /></main><SiteFooter /></div>
-
-  if (pending) {
+  if (route.kind === "reveal") {
+    const pending = route.pending
     const clean = new URLSearchParams(location.search).has("clean")
     return <div className="flex min-h-screen flex-col"><SkipLink target="live-reveal" label="Skip to live reveal" /><LiveRevealPage key={pendingIdentity(pending)} pending={pending} />{!clean && <SiteFooter />}</div>
   }
@@ -62,7 +39,7 @@ export default function App() {
     <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><div className="leading-tight"><strong className="block">GlassPick</strong><span className="text-xs text-muted">provably fair winner picker</span></div></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="https://github.com/jishnuteegala/glasspick">Source</a></div>
     <nav aria-label="Main" className="mx-auto flex max-w-3xl gap-6 px-4 sm:px-6">{([['draw','Draw'],['verify','Verify'],['how','How it works']] as const).map(([id, label]) => <button key={id} aria-current={tab === id ? "page" : undefined} className={`nav-tab ${tab === id ? "nav-tab-active" : ""}`} onClick={() => setTab(id)}>{label}</button>)}</nav>
   </header><main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-    {hashError && <div role="alert" className="notice-fail mb-6">{hashError}</div>}
-    {tab === "draw" && <DrawPage />}{tab === "verify" && <VerifyPage initialHash={hash} initialError={hashError} />}{tab === "how" && <HowItWorksPage />}
+    {route.kind === "link-error" && <div role="alert" className="notice-fail mb-6">{route.message}</div>}
+    {tab === "draw" && <DrawPage />}{tab === "verify" && route.kind !== "loading" && <VerifyPage envelope={route.kind === "proof" ? route.envelope : null} resetToken={route} />}{tab === "how" && <HowItWorksPage />}
   </main><SiteFooter /></div>
 }
