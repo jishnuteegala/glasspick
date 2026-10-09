@@ -50,7 +50,7 @@ export function LiveLinkDisclosure({
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       I understand the live reveal link publishes entrant names and weights to anyone who receives it.
     </label>
-    <button className="button-secondary mt-3" disabled={!checked} onClick={onCopy}>{copied ? "Copied" : "Copy entrant-revealing live link"}</button>
+    <button className="button-secondary mt-3" disabled={!checked} onClick={onCopy}>{checked && copied ? "Copied" : "Copy entrant-revealing live link"}</button>
   </>
 }
 
@@ -271,7 +271,6 @@ export function DrawPage() {
   }
 
   async function copyLink(kind: "stub" | "full" | "live") {
-    setError(null)
     try {
       let hash = ""
       if (kind === "live" && pending) hash = await createPendingEnvelope(pending)
@@ -280,6 +279,7 @@ export function DrawPage() {
       const url = `${location.origin}${location.pathname}${hash}`
       if (url.length > 16_000) throw new Error("Generated URL exceeds the 16,000-character safety limit")
       try { await navigator.clipboard.writeText(url) } catch { throw new Error("Could not copy the link to the clipboard") }
+      setError(null)
       if (copiedTimer.current) clearTimeout(copiedTimer.current)
       setCopied(kind)
       copiedTimer.current = setTimeout(() => setCopied(null), 2000)
@@ -401,7 +401,7 @@ export function DrawPage() {
           <input type="checkbox" checked={fullDisclosure} onChange={(event) => setFullDisclosure(event.target.checked)} />
           I understand the full link publishes entrant names, weights, and outcomes to anyone who receives it.
         </label>
-        <button className="button-secondary mt-3" disabled={!fullDisclosure} onClick={() => copyLink("full")}>{copied === "full" ? "Copied" : "Copy full record link"}</button>
+        <button className="button-secondary mt-3" disabled={!fullDisclosure} onClick={() => copyLink("full")}>{fullDisclosure && copied === "full" ? "Copied" : "Copy full record link"}</button>
       </section>
     </div>}
     {error && <div role="alert" className="notice-fail">{error}</div>}

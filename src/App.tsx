@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { decodeHash } from "./engine/envelope"
+import { decodeHash, isEnvelopeHash } from "./engine/envelope"
 import type { PendingDraw } from "./engine/draw"
 import { pendingIdentity } from "./engine/reveal"
 import { DrawPage } from "./pages/DrawPage"
@@ -26,10 +26,10 @@ export default function App() {
     async function processHash() {
       const current = ++generation
       const next = location.hash
-      if (next !== "" && next !== "#design-system" && !/^#gpp?\d+=/.test(next)) return
+      if (next !== "" && next !== "#design-system" && !isEnvelopeHash(next)) return
       setDesignSystem(next === "#design-system")
       setHash(next); setHashError(null); setPending(null)
-      if (next === "#design-system") return
+      if (next === "" || next === "#design-system") return
       try {
         const envelope = await decodeHash(location.hash)
         if (current !== generation) return

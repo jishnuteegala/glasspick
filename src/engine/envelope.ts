@@ -3,6 +3,10 @@ import { CHAIN_HASH, createCommitment, parsePending, parseRecord, type DrawRecor
 export const MAX_ENCODED_LENGTH = 16_000
 export const MAX_OUTPUT_BYTES = 1_000_000
 
+export function isEnvelopeHash(hash: string): boolean {
+  return /^#gpp?\d+=/.test(hash)
+}
+
 export interface ProofStub {
   type: "stub"
   commitmentHash: string
@@ -92,7 +96,7 @@ export async function createPendingEnvelope(pending: PendingDraw): Promise<strin
 
 export async function decodeHash(hash: string): Promise<ProofEnvelope | { type: "pending"; pending: PendingDraw } | null> {
   if (!hash.startsWith("#gp1=") && !hash.startsWith("#gpp1=")) {
-    if (/^#gpp?\d+=/.test(hash)) throw new Error("Unsupported GlassPick link version")
+    if (isEnvelopeHash(hash)) throw new Error("Unsupported GlassPick link version")
     return null
   }
   const value = hash.slice(hash.indexOf("=") + 1)
