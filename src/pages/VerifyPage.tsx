@@ -45,16 +45,19 @@ export function VerifyPage({ initialHash = location.hash, initialError = null }:
     verifyAbort.current?.abort(); verificationGeneration.current.cancel()
     stubRef.current = null
     setLinkReady(false); setStub(null); setResult(null); setVerifiedRecord(null); setError(null)
-    if (initialError !== null) { setLinkReady(true); return }
-    void decodeHash(initialHash).then((envelope) => {
-      if (!guard.isCurrent(current)) return
-      if (envelope?.type === "stub") { stubRef.current = envelope; setStub(envelope) }
-      if (envelope?.type === "full") void verifyLinkedRecord(envelope.record)
-    }).catch((caught: unknown) => {
-      if (guard.isCurrent(current)) setError(caught instanceof Error ? caught.message : "Invalid link")
-    }).finally(() => {
-      if (guard.isCurrent(current)) setLinkReady(true)
-    })
+    if (initialError !== null) {
+      setLinkReady(true)
+    } else {
+      void decodeHash(initialHash).then((envelope) => {
+        if (!guard.isCurrent(current)) return
+        if (envelope?.type === "stub") { stubRef.current = envelope; setStub(envelope) }
+        if (envelope?.type === "full") void verifyLinkedRecord(envelope.record)
+      }).catch((caught: unknown) => {
+        if (guard.isCurrent(current)) setError(caught instanceof Error ? caught.message : "Invalid link")
+      }).finally(() => {
+        if (guard.isCurrent(current)) setLinkReady(true)
+      })
+    }
     return () => { guard.cancel(); verifyGuard.cancel(); verifyAbort.current?.abort() }
   }, [initialHash, initialError])
 

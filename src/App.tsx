@@ -17,7 +17,7 @@ function SkipLink({ target, label }: { target: string; label: string }) {
     if (!el) return
     event.preventDefault()
     el.scrollIntoView()
-    el.focus()
+    el.focus({ preventScroll: true })
   }}>{label}</a>
 }
 
