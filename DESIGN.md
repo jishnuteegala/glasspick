@@ -37,8 +37,8 @@ typography:
     fontWeight: 600
     lineHeight: 1.2
   countdown:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(3.75rem, 12vw, 6rem)"
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontSize: "clamp(4rem, 15vw, 6.5rem)"
     fontWeight: 600
     lineHeight: 1
   body:
@@ -154,7 +154,7 @@ A restrained cool palette: tinted greys carrying a single indigo accent, with a 
 - **Body** (400, `0.875rem`, line-height 1.5): default copy and controls (`--text-control`). Prose caps at ~65–75ch inside the `max-w-3xl` column.
 - **Label** (500, `0.875rem`): form labels and control text.
 - **Mono** (400, `0.75rem`): commitment hashes, randomness, record detail, and the entrant textarea.
-- **Eyebrow** (600, `0.75rem`, uppercase, letter-spacing 0.18em): used once, above the live-reveal round title.
+- **Eyebrow** (600, `0.75rem`, uppercase, letter-spacing 0.2em): above the live-reveal round title. The Winners caption on the same surface uses the same treatment in muted at `0.875rem`.
 
 ### Named Rules
 **The Fixed-Scale Rule.** Type sizes are a fixed rem scale (0.75 / 0.875 / 1rem for UI), not fluid clamps. Fluid sizing is permitted only for the two reveal-screen headings, where scale is the point.
@@ -205,7 +205,7 @@ Flat by default. Depth is carried mainly by tinted layering, background → surf
 
 ### Live Reveal (signature)
 - A full-height centred column: an indigo eyebrow, round title, then the **commitment frame** (`.commit-frame`: an indigo "Committed before this round existed" label above the full-bordered mono hash on a sunken fill), the **countdown readout**, and finally the winner list. This is the product's focal surface and its one choreographed moment; the composition leads with the countdown and resolves into the winners.
-- **Commitment frame.** Foregrounds the trust claim rather than hiding the hash in a muted block. Full 1px border only — never a coloured side-stripe. The indigo label carries the accent (≥5.4:1 both themes).
+- **Commitment frame.** Foregrounds the trust claim rather than hiding the hash in a muted block. Full 1px border only, never a coloured side-stripe. The indigo label carries the accent (≥5.4:1 both themes).
 - **Countdown readout** (`.countdown-readout`). The monospace tabular countdown is the decisive lead. Beneath it a 2px indigo **progress hairline** (`.countdown-track` / `.countdown-fill`) closes over the final 60 seconds, conveying state, not decoration; it honours the One Accent Rule.
 - **Winner list** (`.winner-list`). Display-scale names with a monospace rank marker and hairline rules top and bottom; the single warm moment.
 - **Motion.** On confirmation a brief confetti burst fires once. Where supported, the countdown→winners state change runs through a View Transition (`::view-transition-group(reveal-focus)`) so the readout morphs into the winners, and each winner **settles** in with a short staggered spring-eased entrance. Each second the countdown digit does a subtle tick. All reveal motion is gated behind `@media (prefers-reduced-motion: no-preference)` and the View Transition is skipped under reduced motion; the static reveal stays fully legible and the confetti is suppressed.

@@ -36,10 +36,12 @@ export function DrawResults({ record }: { record: Pick<DrawRecord, "winners" | "
 
 export function LiveLinkDisclosure({
   checked,
+  copied,
   onChange,
   onCopy,
 }: {
   checked: boolean
+  copied: boolean
   onChange: (checked: boolean) => void
   onCopy: () => void
 }) {
@@ -48,7 +50,7 @@ export function LiveLinkDisclosure({
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       I understand the live reveal link publishes entrant names and weights to anyone who receives it.
     </label>
-    <button className="button-secondary mt-3" disabled={!checked} onClick={onCopy}>Copy entrant-revealing live link</button>
+    <button className="button-secondary mt-3" disabled={!checked} onClick={onCopy}>{copied ? "Copied" : "Copy entrant-revealing live link"}</button>
   </>
 }
 
@@ -140,10 +142,12 @@ export function DrawPage() {
   const [liveDisclosure, setLiveDisclosure] = useState(false)
   const [xProvenance, setXProvenance] = useState<XProvenanceReceipt | null>(null)
   const [loadingImport, setLoadingImport] = useState(false)
+  const [copied, setCopied] = useState<"stub" | "full" | "live" | null>(null)
   const generation = useRef(createGenerationGuard())
   const importGeneration = useRef(0)
   const commitAbort = useRef<AbortController | null>(null)
   const drawAbort = useRef<AbortController | null>(null)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   let entries: WeightedEntry[] = []
   let inputError: string | null = null
   try { entries = parseEntries(raw, weighted) } catch (caught) {
@@ -173,7 +177,7 @@ export function DrawPage() {
       .catch((caught: unknown) => {
         if (active) { setError(caught instanceof Error ? caught.message : "Could not restore the saved commitment"); setRestoring(false) }
       })
-    return () => { active = false; guard.cancel(); commitAbort.current?.abort(); drawAbort.current?.abort() }
+    return () => { active = false; guard.cancel(); commitAbort.current?.abort(); drawAbort.current?.abort(); if (copiedTimer.current) clearTimeout(copiedTimer.current) }
   }, [])
 
   useEffect(() => {
@@ -274,7 +278,10 @@ export function DrawPage() {
       if (kind === "full" && record) hash = await createFullEnvelope(record)
       const url = `${location.origin}${location.pathname}${hash}`
       if (url.length > 16_000) throw new Error("Generated URL exceeds the 16,000-character safety limit")
-      await navigator.clipboard.writeText(url)
+      try { await navigator.clipboard.writeText(url) } catch { throw new Error("Could not copy the link to the clipboard") }
+      if (copiedTimer.current) clearTimeout(copiedTimer.current)
+      setCopied(kind)
+      copiedTimer.current = setTimeout(() => setCopied(null), 2000)
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not create link") }
   }
 
@@ -374,7 +381,7 @@ export function DrawPage() {
         <button className="button-secondary" onClick={reset}>Cancel</button>
       </div>
       <div className="mt-5 border-t border-line pt-4">
-        <LiveLinkDisclosure checked={liveDisclosure} onChange={setLiveDisclosure} onCopy={() => copyLink("live")} />
+        <LiveLinkDisclosure checked={liveDisclosure} copied={copied === "live"} onChange={setLiveDisclosure} onCopy={() => copyLink("live")} />
       </div>
     </section>}
     {record && <div className="space-y-6">
@@ -383,7 +390,7 @@ export function DrawPage() {
         <h2 className="text-sm font-semibold">Share and verify</h2>
         <p className="text-sm text-muted">The privacy-safe link is the default. It contains no names or outcomes and requires the record JSON to verify.</p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <button className="button-primary" onClick={() => copyLink("stub")}>Copy privacy-safe link</button>
+          <button className="button-primary" onClick={() => copyLink("stub")}>{copied === "stub" ? "Copied" : "Copy privacy-safe link"}</button>
            <button className="button-secondary" onClick={download}>Download JSON</button>
            {xProvenance && <button className="button-secondary" onClick={downloadProvenance}>Download X source receipt</button>}
           <button className="button-secondary" onClick={reset}>New draw</button>
@@ -392,7 +399,7 @@ export function DrawPage() {
           <input type="checkbox" checked={fullDisclosure} onChange={(event) => setFullDisclosure(event.target.checked)} />
           I understand the full link publishes entrant names, weights, and outcomes to anyone who receives it.
         </label>
-        <button className="button-secondary mt-3" disabled={!fullDisclosure} onClick={() => copyLink("full")}>Copy full record link</button>
+        <button className="button-secondary mt-3" disabled={!fullDisclosure} onClick={() => copyLink("full")}>{copied === "full" ? "Copied" : "Copy full record link"}</button>
       </section>
     </div>}
     {error && <div role="alert" className="notice-fail">{error}</div>}

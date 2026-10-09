@@ -23,13 +23,15 @@ describe("draw results", () => {
 
 describe("live reveal disclosure", () => {
   it("names the entrant disclosure and disables copy until confirmed", () => {
-    const locked = renderToStaticMarkup(<LiveLinkDisclosure checked={false} onChange={() => undefined} onCopy={() => undefined} />)
-    const unlocked = renderToStaticMarkup(<LiveLinkDisclosure checked onChange={() => undefined} onCopy={() => undefined} />)
+    const locked = renderToStaticMarkup(<LiveLinkDisclosure checked={false} copied={false} onChange={() => undefined} onCopy={() => undefined} />)
+    const unlocked = renderToStaticMarkup(<LiveLinkDisclosure checked copied={false} onChange={() => undefined} onCopy={() => undefined} />)
+    const done = renderToStaticMarkup(<LiveLinkDisclosure checked copied onChange={() => undefined} onCopy={() => undefined} />)
 
     expect(locked).toContain("publishes entrant names and weights")
     expect(locked).toContain("Copy entrant-revealing live link")
     expect(locked).toContain("disabled")
     expect(unlocked).not.toContain("disabled")
+    expect(done).toContain("Copied")
   })
 
   it("clears both disclosure acknowledgements for a new draw", () => {

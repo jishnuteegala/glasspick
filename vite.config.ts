@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'GlassPick — provably fair winner picker',
+        name: 'GlassPick - provably fair winner picker',
         short_name: 'GlassPick',
         description:
           'Open-source, provably fair giveaway winner picker. Commit-reveal draws seeded by the drand public randomness beacon, verifiable by anyone.',

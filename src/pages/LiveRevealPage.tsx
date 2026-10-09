@@ -151,7 +151,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
     {(state?.phase === "verified" || state?.phase === "manual") && record && <section className="winner-reveal" style={{ viewTransitionName: "reveal-focus" }}>
       <p role="status" className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${state.phase === "verified" ? "status-chip-ok" : "status-chip-warn"}`}><span aria-hidden="true">{state.phase === "verified" ? "✓" : "!"}</span>{state.phase === "verified" ? "Confirmed against quicknet" : "Manual beacon is unverified until a relay confirms it"}</p>
       {state.phase === "manual" && <button className="button-secondary mt-4" onClick={checkRound}>Retry relays</button>}
-      <h2 className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-muted">Winner{record.winners.length === 1 ? "" : "s"}</h2>
+      <h2 className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-muted">Winner{record.winners.length === 1 ? "" : "s"}</h2>
       <ol className="winner-list">{record.winners.map((entry, index) => <li key={entry.name} style={{ "--i": index } as CSSProperties}><span className="rank">{index + 1}</span><strong>@{entry.name}</strong></li>)}</ol>
     </section>}
     {(state?.phase === "unavailable" || state?.phase === "mismatch") && <section className="mt-10 w-full max-w-xl text-left">

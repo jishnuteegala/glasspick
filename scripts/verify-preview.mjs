@@ -22,8 +22,8 @@ async function fetchWithRetry(url) {
 }
 
 try {
-  const page = await fetchWithRetry(`${baseUrl}/design-system`)
-  if (!page.ok) throw new Error(`Preview returned ${page.status} for /design-system`)
+  const page = await fetchWithRetry(`${baseUrl}/`)
+  if (!page.ok) throw new Error(`Preview returned ${page.status} for /`)
   const html = await page.text()
   const entry = html.match(/<script[^>]+src="([^"]+\.js)"/)
   if (!entry) throw new Error("Preview HTML did not include an entry bundle")

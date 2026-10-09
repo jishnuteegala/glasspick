@@ -135,6 +135,10 @@ export async function decodeHash(hash: string): Promise<ProofEnvelope | { type: 
     if (full.type !== "full") throw new Error("Unsupported proof envelope")
     return { type: "full", record: parseRecord(full.record) }
   } catch (error) {
-    throw new Error(error instanceof Error ? `Invalid GlassPick link: ${error.message}` : "Invalid GlassPick link")
+    const detail = error instanceof SyntaxError || error instanceof TypeError ||
+        error instanceof DOMException || error instanceof RangeError
+      ? "the link is damaged or incomplete"
+      : error instanceof Error ? error.message : "the link is damaged or incomplete"
+    throw new Error(`Invalid GlassPick link: ${detail}`)
   }
 }

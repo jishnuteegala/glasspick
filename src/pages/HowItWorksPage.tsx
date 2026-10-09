@@ -1,7 +1,7 @@
 const X_IMPORT_ENABLED = import.meta.env.VITE_X_IMPORT_ENABLED === "true"
 
 export function HowItWorksPage() {
-  return <article className="panel text-sm leading-6">
+  return <article className="panel max-w-prose text-sm leading-6">
     <h1 className="text-base font-semibold">How GlassPick works</h1>
     <ol className="mt-5 list-decimal space-y-4 pl-5">
       <li><strong>Commit first.</strong> GlassPick hashes the quicknet chain, algorithm, canonical weighted entries, entrant count, total weight, winner and alternate counts, nonce, and future round.</li>
