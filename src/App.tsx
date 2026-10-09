@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { decodeHash, isEnvelopeHash } from "./engine/envelope"
+import { decodeHash } from "./engine/envelope"
+import { isRouteHash } from "./routes"
 import type { PendingDraw } from "./engine/draw"
 import { pendingIdentity } from "./engine/reveal"
 import { DrawPage } from "./pages/DrawPage"
@@ -10,8 +11,14 @@ import { VerifyPage } from "./pages/VerifyPage"
 
 type Tab = "draw" | "verify" | "how"
 
-export function isRouteHash(hash: string): boolean {
-  return hash === "" || hash === "#design-system" || isEnvelopeHash(hash)
+function SkipLink({ target, label }: { target: string; label: string }) {
+  return <a className="skip-link" href={`#${target}`} onClick={(event) => {
+    const el = document.getElementById(target)
+    if (!el) return
+    event.preventDefault()
+    el.scrollIntoView()
+    el.focus()
+  }}>{label}</a>
 }
 
 function SiteFooter() {
@@ -45,16 +52,16 @@ export default function App() {
     return () => removeEventListener("hashchange", processHash)
   }, [])
 
-  if (designSystem) return <div className="flex min-h-screen flex-col"><a className="skip-link" href="#main-content">Skip to main content</a><header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><strong>GlassPick</strong></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="#">Back to app</a></div></header><main id="main-content" className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"><DesignSystemPage /></main><SiteFooter /></div>
+  if (designSystem) return <div className="flex min-h-screen flex-col"><SkipLink target="main-content" label="Skip to main content" /><header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><strong>GlassPick</strong></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="#">Back to app</a></div></header><main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"><DesignSystemPage /></main><SiteFooter /></div>
 
   if (pending) {
     const clean = new URLSearchParams(location.search).has("clean")
-    return <div className="flex min-h-screen flex-col"><a className="skip-link" href="#live-reveal">Skip to live reveal</a><LiveRevealPage key={pendingIdentity(pending)} pending={pending} />{!clean && <SiteFooter />}</div>
+    return <div className="flex min-h-screen flex-col"><SkipLink target="live-reveal" label="Skip to live reveal" /><LiveRevealPage key={pendingIdentity(pending)} pending={pending} />{!clean && <SiteFooter />}</div>
   }
-  return <div className="flex min-h-screen flex-col"><a className="skip-link" href="#main-content">Skip to main content</a><header className="border-b border-line bg-surface">
+  return <div className="flex min-h-screen flex-col"><SkipLink target="main-content" label="Skip to main content" /><header className="border-b border-line bg-surface">
     <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6"><div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white shadow-panel">G</span><div className="leading-tight"><strong className="block">GlassPick</strong><span className="text-xs text-muted">provably fair winner picker</span></div></div><a className="inline-flex min-h-6 items-center text-sm text-muted hover:text-ink" href="https://github.com/jishnuteegala/glasspick">Source</a></div>
     <nav aria-label="Main" className="mx-auto flex max-w-3xl gap-6 px-4 sm:px-6">{([['draw','Draw'],['verify','Verify'],['how','How it works']] as const).map(([id, label]) => <button key={id} aria-current={tab === id ? "page" : undefined} className={`nav-tab ${tab === id ? "nav-tab-active" : ""}`} onClick={() => setTab(id)}>{label}</button>)}</nav>
-  </header><main id="main-content" className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+  </header><main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
     {hashError && <div role="alert" className="notice-fail mb-6">{hashError}</div>}
     {tab === "draw" && <DrawPage />}{tab === "verify" && <VerifyPage initialHash={hash} initialError={hashError} />}{tab === "how" && <HowItWorksPage />}
   </main><SiteFooter /></div>

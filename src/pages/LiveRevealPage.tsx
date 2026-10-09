@@ -139,7 +139,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
   const countdownProgress = state?.phase === "countdown"
     ? Math.min(1, Math.max(0, 1 - Math.min(state.secondsLeft, 60) / 60))
     : 1
-  return <main id="live-reveal" className="reveal-shell flex-1">
+  return <main id="live-reveal" tabIndex={-1} className="reveal-shell flex-1">
     <p className="reveal-eyebrow">GlassPick live reveal</p>
     <h1 className="reveal-round">Quicknet round {pending.commitment.round}</h1>
     <div className="commit-frame"><span>Committed before this round existed</span><code>{pending.commitment.commitmentHash}</code></div>
