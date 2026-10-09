@@ -5,7 +5,7 @@ import { createGenerationGuard } from "../engine/generation"
 import { verifyPublicDraw, type PublicVerification } from "../engine/verification"
 import { parseRecordJson, readJsonFile } from "./verify-input"
 
-export function VerifyPage({ initialHash = location.hash }: { initialHash?: string }) {
+export function VerifyPage({ initialHash = location.hash, initialError = null }: { initialHash?: string; initialError?: string | null }) {
   const [raw, setRaw] = useState("")
   const [stub, setStub] = useState<ProofStub | null>(null)
   const [result, setResult] = useState<PublicVerification | null>(null)
@@ -45,6 +45,7 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
     verifyAbort.current?.abort(); verificationGeneration.current.cancel()
     stubRef.current = null
     setLinkReady(false); setStub(null); setResult(null); setVerifiedRecord(null); setError(null)
+    if (initialError !== null) { setLinkReady(true); return }
     void decodeHash(initialHash).then((envelope) => {
       if (!guard.isCurrent(current)) return
       if (envelope?.type === "stub") { stubRef.current = envelope; setStub(envelope) }
@@ -55,7 +56,7 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
       if (guard.isCurrent(current)) setLinkReady(true)
     })
     return () => { guard.cancel(); verifyGuard.cancel(); verifyAbort.current?.abort() }
-  }, [initialHash])
+  }, [initialHash, initialError])
 
   async function submit() {
     try { await verifyRecord(parseRecordJson(raw)) }
@@ -87,7 +88,7 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
       <textarea aria-label="Draw record JSON" rows={11} value={raw} onChange={(event) => { verificationGeneration.current.cancel(); verifyAbort.current?.abort(); setBusy(false); setRaw(event.target.value); setResult(null); setVerifiedRecord(null) }} placeholder='{"version":2,...}' className="control mt-4 font-mono" />
       <button className="button-primary mt-4" disabled={!linkReady || busy || !raw.trim()} onClick={submit}>{busy ? "Verifying..." : "Verify"}</button>
     </section>
-    {error && <div role="alert" className="notice-fail">{error}</div>}
+    {error && error !== initialError && <div role="alert" className="notice-fail">{error}</div>}
     {result && verifiedRecord && <section className="panel">
       <h2 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${result.state === "verified" ? "status-chip-ok" : result.state === "local" ? "status-chip-warn" : "status-chip-fail"}`}><span aria-hidden="true">{result.state === "verified" ? "✓" : result.state === "local" ? "!" : "×"}</span>{headline}</h2>
       <ul className="mt-5 space-y-4">{result.checks.map((check) => {

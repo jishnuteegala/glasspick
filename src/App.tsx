@@ -10,6 +10,10 @@ import { VerifyPage } from "./pages/VerifyPage"
 
 type Tab = "draw" | "verify" | "how"
 
+export function isRouteHash(hash: string): boolean {
+  return hash === "" || hash === "#design-system" || isEnvelopeHash(hash)
+}
+
 function SiteFooter() {
   return <footer className="border-t border-line bg-surface"><div className="mx-auto flex max-w-3xl flex-col gap-2 px-4 py-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>© {new Date().getFullYear()} Jishnu Teegala</span><nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2"><a className="inline-flex min-h-6 items-center hover:text-ink" href="#design-system">Design system</a><a className="inline-flex min-h-6 items-center hover:text-ink" href="https://jishnuteegala.com/privacy">Privacy</a><a className="inline-flex min-h-6 items-center hover:text-ink" href="https://github.com/jishnuteegala/glasspick">Source code</a></nav></div></footer>
 }
@@ -26,12 +30,12 @@ export default function App() {
     async function processHash() {
       const current = ++generation
       const next = location.hash
-      if (next !== "" && next !== "#design-system" && !isEnvelopeHash(next)) return
+      if (!isRouteHash(next)) return
       setDesignSystem(next === "#design-system")
       setHash(next); setHashError(null); setPending(null)
       if (next === "" || next === "#design-system") return
       try {
-        const envelope = await decodeHash(location.hash)
+        const envelope = await decodeHash(next)
         if (current !== generation) return
         if (envelope?.type === "pending") setPending(envelope.pending)
         if (envelope?.type === "stub" || envelope?.type === "full") setTab("verify")
@@ -52,6 +56,6 @@ export default function App() {
     <nav aria-label="Main" className="mx-auto flex max-w-3xl gap-6 px-4 sm:px-6">{([['draw','Draw'],['verify','Verify'],['how','How it works']] as const).map(([id, label]) => <button key={id} aria-current={tab === id ? "page" : undefined} className={`nav-tab ${tab === id ? "nav-tab-active" : ""}`} onClick={() => setTab(id)}>{label}</button>)}</nav>
   </header><main id="main-content" className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
     {hashError && <div role="alert" className="notice-fail mb-6">{hashError}</div>}
-    {tab === "draw" && <DrawPage />}{tab === "verify" && <VerifyPage initialHash={hash} />}{tab === "how" && <HowItWorksPage />}
+    {tab === "draw" && <DrawPage />}{tab === "verify" && <VerifyPage initialHash={hash} initialError={hashError} />}{tab === "how" && <HowItWorksPage />}
   </main><SiteFooter /></div>
 }
