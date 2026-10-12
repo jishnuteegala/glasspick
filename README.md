@@ -3,6 +3,8 @@
 [![CI](https://github.com/jishnuteegala/glasspick/actions/workflows/ci.yml/badge.svg)](https://github.com/jishnuteegala/glasspick/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-111827.svg)](LICENSE)
 
+A giveaway organiser picks a winner and then has to defend it.
+Entrants can ask whether the draw was steered, and a screenshot or a random-name picker gives no answer.
 GlassPick is an open-source, provably fair weighted giveaway picker.
 It commits every outcome-affecting input before a future drand round exists, then produces a record anyone can reproduce locally.
 
@@ -114,6 +116,7 @@ At deployment time, add the subdomain to the coverage list at `jishnuteegala.com
 GlassPick does not use analytics, cookies, accounts, payments, contact forms, or user-generated content hosting.
 Entrant lists and draw records are processed in the visitor's browser and are not sent to GlassPick. When the optional X importer is used, the post URL and selected source types are sent to the same-origin function, which returns public handles to the browser without server-side storage.
 Pending draws, the most recent completed draw record, and its X source receipt (when the importer is used) stay in the browser's local storage so a draw and its result survive a refresh; this is functional storage. Starting a new draw or pressing "New draw" removes all of it, and it never leaves the device.
+A service worker caches the app's static assets so the page loads offline; it stores no draw data.
 Public randomness requests go directly from the browser to the drand Quicknet relays.
 
 ### What GlassPick proves

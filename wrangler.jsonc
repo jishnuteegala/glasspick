@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "glasspick",
   "compatibility_date": "2026-07-20",
+  "previews": {},
   "observability": {
     "enabled": false,
   },

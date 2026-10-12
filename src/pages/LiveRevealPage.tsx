@@ -139,7 +139,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
   const countdownProgress = state?.phase === "countdown"
     ? Math.min(1, Math.max(0, 1 - Math.min(state.secondsLeft, 60) / 60))
     : 1
-  return <main id="live-reveal" className="reveal-shell flex-1">
+  return <main id="live-reveal" tabIndex={-1} className="reveal-shell flex-1">
     <p className="reveal-eyebrow">GlassPick live reveal</p>
     <h1 className="reveal-round">Quicknet round {pending.commitment.round}</h1>
     <div className="commit-frame"><span>Committed before this round existed</span><code>{pending.commitment.commitmentHash}</code></div>
@@ -151,7 +151,7 @@ export function LiveRevealPage({ pending }: { pending: PendingDraw }) {
     {(state?.phase === "verified" || state?.phase === "manual") && record && <section className="winner-reveal" style={{ viewTransitionName: "reveal-focus" }}>
       <p role="status" className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${state.phase === "verified" ? "status-chip-ok" : "status-chip-warn"}`}><span aria-hidden="true">{state.phase === "verified" ? "✓" : "!"}</span>{state.phase === "verified" ? "Confirmed against quicknet" : "Manual beacon is unverified until a relay confirms it"}</p>
       {state.phase === "manual" && <button className="button-secondary mt-4" onClick={checkRound}>Retry relays</button>}
-      <h2 className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-muted">Winner{record.winners.length === 1 ? "" : "s"}</h2>
+      <h2 className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-muted">Winner{record.winners.length === 1 ? "" : "s"}</h2>
       <ol className="winner-list">{record.winners.map((entry, index) => <li key={entry.name} style={{ "--i": index } as CSSProperties}><span className="rank">{index + 1}</span><strong>@{entry.name}</strong></li>)}</ol>
     </section>}
     {(state?.phase === "unavailable" || state?.phase === "mismatch") && <section className="mt-10 w-full max-w-xl text-left">

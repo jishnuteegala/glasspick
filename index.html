@@ -6,13 +6,22 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="GlassPick" />
-    <title>GlassPick — provably fair winner picker</title>
+    <title>GlassPick - provably fair winner picker</title>
     <meta name="description" content="Open-source, provably fair giveaway winner picker. Commit-reveal draws seeded by the drand public randomness beacon, verifiable by anyone." />
+    <meta property="og:title" content="GlassPick - provably fair winner picker" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://glasspick.jishnuteegala.com/" />
+    <meta property="og:image" content="https://glasspick.jishnuteegala.com/pwa-512x512.png" />
+    <meta property="og:description" content="Open-source, provably fair giveaway winner picker. Commit-reveal draws seeded by the drand public randomness beacon, verifiable by anyone." />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
+    <noscript>GlassPick needs JavaScript to run a draw and verify a record.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

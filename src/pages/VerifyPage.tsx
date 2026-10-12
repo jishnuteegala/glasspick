@@ -1,22 +1,19 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react"
 import type { DrawRecord } from "../engine/draw"
-import { decodeHash, type ProofStub } from "../engine/envelope"
+import type { ProofEnvelope } from "../engine/envelope"
 import { createGenerationGuard } from "../engine/generation"
 import { verifyPublicDraw, type PublicVerification } from "../engine/verification"
 import { parseRecordJson, readJsonFile } from "./verify-input"
 
-export function VerifyPage({ initialHash = location.hash }: { initialHash?: string }) {
+export function VerifyPage({ envelope, resetToken }: { envelope: ProofEnvelope | null; resetToken: unknown }) {
   const [raw, setRaw] = useState("")
-  const [stub, setStub] = useState<ProofStub | null>(null)
   const [result, setResult] = useState<PublicVerification | null>(null)
   const [verifiedRecord, setVerifiedRecord] = useState<DrawRecord | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [linkReady, setLinkReady] = useState(false)
-  const linkGeneration = useRef(createGenerationGuard())
   const verificationGeneration = useRef(createGenerationGuard())
-  const stubRef = useRef<ProofStub | null>(null)
   const verifyAbort = useRef<AbortController | null>(null)
+  const stub = envelope?.type === "stub" ? envelope : null
 
   async function verifyRecord(record: DrawRecord, current = verificationGeneration.current.next()) {
     verifyAbort.current?.abort()
@@ -24,7 +21,7 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
     verifyAbort.current = controller
     setBusy(true); setError(null); setResult(null)
     try {
-      if (stubRef.current && stubRef.current.commitmentHash !== record.commitmentHash) throw new Error("This record does not match the shared commitment")
+      if (stub && stub.commitmentHash !== record.commitmentHash) throw new Error("This record does not match the shared commitment")
       const nextResult = await verifyPublicDraw(record, undefined, controller.signal)
       if (!verificationGeneration.current.isCurrent(current)) return
       setResult(nextResult); setVerifiedRecord(record); setRaw(JSON.stringify(record, null, 2))
@@ -39,23 +36,12 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
   const verifyLinkedRecord = useEffectEvent(verifyRecord)
 
   useEffect(() => {
-    const guard = linkGeneration.current
     const verifyGuard = verificationGeneration.current
-    const current = guard.next()
-    verifyAbort.current?.abort(); verificationGeneration.current.cancel()
-    stubRef.current = null
-    setLinkReady(false); setStub(null); setResult(null); setVerifiedRecord(null); setError(null)
-    void decodeHash(initialHash).then((envelope) => {
-      if (!guard.isCurrent(current)) return
-      if (envelope?.type === "stub") { stubRef.current = envelope; setStub(envelope) }
-      if (envelope?.type === "full") void verifyLinkedRecord(envelope.record)
-    }).catch((caught: unknown) => {
-      if (guard.isCurrent(current)) setError(caught instanceof Error ? caught.message : "Invalid link")
-    }).finally(() => {
-      if (guard.isCurrent(current)) setLinkReady(true)
-    })
-    return () => { guard.cancel(); verifyGuard.cancel(); verifyAbort.current?.abort() }
-  }, [initialHash])
+    verifyAbort.current?.abort(); verifyGuard.cancel()
+    setResult(null); setVerifiedRecord(null); setError(null); setBusy(false)
+    if (envelope?.type === "full") void verifyLinkedRecord(envelope.record)
+    return () => { verifyGuard.cancel(); verifyAbort.current?.abort() }
+  }, [envelope, resetToken])
 
   async function submit() {
     try { await verifyRecord(parseRecordJson(raw)) }
@@ -85,7 +71,7 @@ export function VerifyPage({ initialHash = location.hash }: { initialHash?: stri
       <label className="label" htmlFor="record-file">Upload downloaded JSON</label>
       <input id="record-file" className="file-control" type="file" accept="application/json,.json" onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = "" }} />
       <textarea aria-label="Draw record JSON" rows={11} value={raw} onChange={(event) => { verificationGeneration.current.cancel(); verifyAbort.current?.abort(); setBusy(false); setRaw(event.target.value); setResult(null); setVerifiedRecord(null) }} placeholder='{"version":2,...}' className="control mt-4 font-mono" />
-      <button className="button-primary mt-4" disabled={!linkReady || busy || !raw.trim()} onClick={submit}>{busy ? "Verifying..." : "Verify"}</button>
+      <button className="button-primary mt-4" disabled={busy || !raw.trim()} onClick={submit}>{busy ? "Verifying..." : "Verify"}</button>
     </section>
     {error && <div role="alert" className="notice-fail">{error}</div>}
     {result && verifiedRecord && <section className="panel">

@@ -28,3 +28,4 @@ worker/.env*
 *.sw?
 
 .playwright-mcp
+.scratch/

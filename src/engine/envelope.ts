@@ -3,6 +3,10 @@ import { CHAIN_HASH, createCommitment, parsePending, parseRecord, type DrawRecor
 export const MAX_ENCODED_LENGTH = 16_000
 export const MAX_OUTPUT_BYTES = 1_000_000
 
+export function isEnvelopeHash(hash: string): boolean {
+  return /^#gpp?\d+=/.test(hash)
+}
+
 export interface ProofStub {
   type: "stub"
   commitmentHash: string
@@ -92,7 +96,7 @@ export async function createPendingEnvelope(pending: PendingDraw): Promise<strin
 
 export async function decodeHash(hash: string): Promise<ProofEnvelope | { type: "pending"; pending: PendingDraw } | null> {
   if (!hash.startsWith("#gp1=") && !hash.startsWith("#gpp1=")) {
-    if (/^#gpp?\d+=/.test(hash)) throw new Error("Unsupported GlassPick link version")
+    if (isEnvelopeHash(hash)) throw new Error("Unsupported GlassPick link version")
     return null
   }
   const value = hash.slice(hash.indexOf("=") + 1)
@@ -135,6 +139,10 @@ export async function decodeHash(hash: string): Promise<ProofEnvelope | { type: 
     if (full.type !== "full") throw new Error("Unsupported proof envelope")
     return { type: "full", record: parseRecord(full.record) }
   } catch (error) {
-    throw new Error(error instanceof Error ? `Invalid GlassPick link: ${error.message}` : "Invalid GlassPick link")
+    const detail = error instanceof SyntaxError || error instanceof TypeError ||
+        error instanceof DOMException || error instanceof RangeError
+      ? "the link is damaged or incomplete"
+      : error instanceof Error ? error.message : "the link is damaged or incomplete"
+    throw new Error(`Invalid GlassPick link: ${detail}`)
   }
 }
