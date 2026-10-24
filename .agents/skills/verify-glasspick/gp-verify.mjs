@@ -30,7 +30,7 @@ const flag = (name, dflt) => {
 const pos = args.filter(
   (a, i) => !a.startsWith("--") && !FLAG_NAMES.includes(args[i - 1]?.slice(2))
 );
-const APP = flag("app", "http://127.0.0.1:4173");
+const APP = flag("app", "http://localhost:4173");
 const CDP = Number(flag("cdp", "9222"));
 const CDP_HTTP = `http://127.0.0.1:${CDP}`;
 const TIMEOUT = Number(flag("timeout", "15000"));
@@ -108,7 +108,7 @@ class Cdp {
 }
 
 // Attach to the run's page target (first existing page, else a fresh one), so
-// nav/wait/eval/shot all drive the SAME page across invocations.
+// nav/wait/eval/shot/sw-clear all drive the SAME page across invocations.
 async function page(cdp) {
   const { targetInfos } = await cdp.send("Target.getTargets");
   let targetId = targetInfos.find((t) => t.type === "page")?.targetId;
@@ -282,10 +282,50 @@ const commands = {
       fail(`invalid --app url: ${APP}`);
     }
     const cdp = await Cdp.connect();
-    await cdp.send("Storage.clearDataForOrigin", {
-      origin,
-      storageTypes: "all",
-    });
+    const { sessionId } = await page(cdp);
+    // Storage.clearDataForOrigin fails with "Internal error" on headless
+    // Chrome 155 - clear page-side instead, on the app origin itself.
+    const loc = await evalIn(cdp, sessionId, "location.origin").catch(() => null);
+    if (loc !== origin) {
+      await cdp.send("Page.navigate", { url: APP }, sessionId);
+      // Poll the target origin, not just readyState: Runtime.evaluate can
+      // still resolve in the pre-navigation context (about:blank is already
+      // 'complete'), which would clear the wrong origin's storage.
+      let onOrigin = false;
+      const deadline = Date.now() + TIMEOUT;
+      while (Date.now() < deadline && !onOrigin) {
+        onOrigin = await evalIn(
+          cdp,
+          sessionId,
+          `location.origin === ${JSON.stringify(origin)} && document.readyState === 'complete'`
+        ).catch(() => false);
+        if (!onOrigin) await new Promise((r) => setTimeout(r, 300));
+      }
+      if (!onOrigin) {
+        cdp.close();
+        fail(`sw-clear: page never reached ${origin}`);
+      }
+    }
+    await evalIn(
+      cdp,
+      sessionId,
+      `(async () => {
+        localStorage.clear(); sessionStorage.clear();
+        if (typeof caches !== 'undefined')
+          for (const k of await caches.keys()) await caches.delete(k);
+        if ('serviceWorker' in navigator)
+          for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+        if (indexedDB.databases)
+          for (const d of await indexedDB.databases())
+            await new Promise((resolve, reject) => {
+              const req = indexedDB.deleteDatabase(d.name);
+              req.onsuccess = resolve;
+              req.onerror = () => reject(req.error);
+              req.onblocked = () => reject(new Error('deleteDatabase blocked: ' + d.name));
+            });
+        return true;
+      })()`
+    );
     cdp.close();
     console.log(`storage + service workers cleared for ${origin}`);
   },

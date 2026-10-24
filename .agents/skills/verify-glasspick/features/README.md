@@ -6,7 +6,7 @@ feature file as the recipe.
 
 ## Baseline preconditions
 
-- Production build served at `http://127.0.0.1:4173` via `pnpm preview` in a
+- Production build served at `http://localhost:4173` via `pnpm preview` in a
   background shell (run `pnpm build` first if `dist/` is stale).
 - Isolated headless Chrome up on CDP port 9222 with a fresh
   `.scratch/verify/profile-*` user-data dir - never the user's real browser.
