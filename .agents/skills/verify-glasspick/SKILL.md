@@ -17,12 +17,14 @@ verifying before driving.
 
    ```bash
    pnpm build          # tsc -b && vite build -> dist/
-   pnpm preview        # vite preview, serves dist/ on http://127.0.0.1:4173
+   pnpm preview        # vite preview, serves dist/ on http://localhost:4173
    ```
 
-   Ready when the preview prints `Local:` with the 4173 URL. `pnpm preview` must
-   stay running in a background shell for the whole run; plain static serving is
-   enough because every route is a `#` fragment.
+   Ready when the preview prints `Local:` with the 4173 URL. Use `localhost`,
+   not `127.0.0.1` - on Windows vite preview binds `::1` and IPv4 loopback
+   refuses. `pnpm preview` must stay running in a background shell for the
+   whole run; plain static serving is enough because every route is a `#`
+   fragment.
 
 2. Start an isolated headless Chrome (background-safe: the helper spawns it
    detached and returns):
@@ -38,7 +40,7 @@ verifying before driving.
    view. Pick a different `--cdp` port if 9222 is taken.
 
 3. Export nothing; all helper flags carry their own defaults (`--app
-   http://127.0.0.1:4173`, `--cdp 9222`).
+   http://localhost:4173`, `--cdp 9222`).
 
 ## Doctor
 
@@ -60,8 +62,8 @@ profile - see Cleanup).
 Every user route is a URL fragment; navigation is a page load:
 
 ```bash
-node .agents/skills/verify-glasspick/gp-verify.mjs nav "http://127.0.0.1:4173/#design-system"
-node .agents/skills/verify-glasspick/gp-verify.mjs nav "http://127.0.0.1:4173/#gp1=notavalidenvelope"
+node .agents/skills/verify-glasspick/gp-verify.mjs nav "http://localhost:4173/#design-system"
+node .agents/skills/verify-glasspick/gp-verify.mjs nav "http://localhost:4173/#gp1=notavalidenvelope"
 ```
 
 `nav`, `wait`, `eval`, and `shot` all attach to the same page target, so state

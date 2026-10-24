@@ -30,7 +30,7 @@ const flag = (name, dflt) => {
 const pos = args.filter(
   (a, i) => !a.startsWith("--") && !FLAG_NAMES.includes(args[i - 1]?.slice(2))
 );
-const APP = flag("app", "http://127.0.0.1:4173");
+const APP = flag("app", "http://localhost:4173");
 const CDP = Number(flag("cdp", "9222"));
 const CDP_HTTP = `http://127.0.0.1:${CDP}`;
 const TIMEOUT = Number(flag("timeout", "15000"));
@@ -282,10 +282,29 @@ const commands = {
       fail(`invalid --app url: ${APP}`);
     }
     const cdp = await Cdp.connect();
-    await cdp.send("Storage.clearDataForOrigin", {
-      origin,
-      storageTypes: "all",
-    });
+    const { sessionId } = await page(cdp);
+    // Storage.clearDataForOrigin fails with "Internal error" on headless
+    // Chrome 155 - clear page-side instead, on the app origin itself.
+    const loc = await evalIn(cdp, sessionId, "location.origin").catch(() => null);
+    if (loc !== origin) {
+      await cdp.send("Page.navigate", { url: APP }, sessionId);
+      for (let i = 0; i < 30; i++) {
+        const ready = await evalIn(cdp, sessionId, "document.readyState === 'complete'").catch(() => false);
+        if (ready === true) break;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+    await evalIn(
+      cdp,
+      sessionId,
+      `(async () => {
+        localStorage.clear(); sessionStorage.clear();
+        for (const k of await caches.keys()) await caches.delete(k);
+        for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+        if (indexedDB.databases) for (const d of await indexedDB.databases()) indexedDB.deleteDatabase(d.name);
+        return true;
+      })()`
+    );
     cdp.close();
     console.log(`storage + service workers cleared for ${origin}`);
   },
