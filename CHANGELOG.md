@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.1](https://github.com/jishnuteegala/glasspick/compare/v0.1.0...v0.1.1) (2026-10-24)
+
+
+### Features
+
+* record docs, build, and ci commits in changelogs ([#25](https://github.com/jishnuteegala/glasspick/issues/25)) ([ef6a837](https://github.com/jishnuteegala/glasspick/commit/ef6a837e7c144f864fe5d7da2454f3a62a10bd32))
+
+
+### Bug Fixes
+
+* pre-launch quality pass over surfaces and prose ([#28](https://github.com/jishnuteegala/glasspick/issues/28)) ([ddbed3d](https://github.com/jishnuteegala/glasspick/commit/ddbed3d45ed3b1bd2becbaf669c87c821ea39311))
+
+
+### Documentation
+
+* fix verify-glasspick drift and sw-clear on Chrome 155 ([#30](https://github.com/jishnuteegala/glasspick/issues/30)) ([009dc11](https://github.com/jishnuteegala/glasspick/commit/009dc11eaa1109af4da8fd6ceb9a917021e87f18))
+
 ## 0.1.0 (2026-08-03)
 
 
