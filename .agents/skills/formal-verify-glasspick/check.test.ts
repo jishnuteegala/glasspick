@@ -238,7 +238,7 @@ describe("formal verify: draw-record tamper evidence", () => {
   it("G4 pickTicket is deterministic, bounded, and retries on rejected digests", async () => {
     const bad: string[] = [];
     const seed = hex(64);
-    for (const total of [2, 3, 7, 100, 100_000]) {
+    for (const total of [1, 2, 3, 7, 100, 100_000]) {
       const a = await pickTicket(total, seed, 0);
       const b = await pickTicket(total, seed, 0);
       if (a !== b || a < 0 || a >= total) bad.push(`total=${total}: ${a} vs ${b}`);
@@ -255,11 +255,12 @@ describe("formal verify: draw-record tamper evidence", () => {
       return calls === 1 ? limit.toString(16).slice(-64) : "0".repeat(64);
     });
     if (calls !== 2 || ticket !== 0) bad.push(`rejection: ticket=${ticket} calls=${calls}`);
+    if (seen[0] !== `${seed}|3|0`) bad.push(`rejection: call 1 preimage was ${seen[0]}`);
     if (seen[1] !== `${seed}|3|1`) bad.push(`rejection: call 2 preimage was ${seen[1]}`);
     expect(bad).toEqual([]);
   });
 
-  it("G5 deriveSeed binds commitment hash and randomness exactly", async () => {
+  it("G5 deriveSeed binds both inputs and is deterministic", async () => {
     const bad: string[] = [];
     const commitment = hex(64);
     const randomness = hex(64);
