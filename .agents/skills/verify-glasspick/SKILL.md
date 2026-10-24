@@ -70,7 +70,7 @@ node .agents/skills/verify-glasspick/gp-verify.mjs nav "http://localhost:4173/#g
 persists across invocations within a run. Drive with predicates over stable
 handles, not pixel positions:
 
-- `wait "document.querySelector('textarea') !== null"` - draw form mounted
+- `wait "document.querySelector('#entrants') !== null"` - draw form mounted
 - `wait "!!document.querySelector('[role=alert]')"` - error/success notice shown
 - `wait "!!document.getElementById('live-reveal')"` - reveal surface mounted
 - `eval "document.activeElement.id"` / `eval "location.hash"` - focus and

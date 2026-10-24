@@ -14,7 +14,7 @@ the same pending draw.
 
 ## How to get to it (user POV)
 
-- Open the app root `http://127.0.0.1:4173/` (the draw page is home).
+- Open the app root `http://localhost:4173/` (the draw page is home).
 
 ## Driving it with gp-verify
 

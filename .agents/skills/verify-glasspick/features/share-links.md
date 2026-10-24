@@ -41,7 +41,7 @@ Preconditions:
   only. Inject a stub before clicking:
   `eval "navigator.clipboard.writeText = t => (window.__copied = t, Promise.resolve())"`,
   then `eval "window.__copied"` and assert it starts `http://localhost:4173/#gpp1=`
-  or `#gp1=` and the whole URL is under 16000 chars. The stub dies on every
+  or `http://localhost:4173/#gp1=` and the whole URL is under 16000 chars. The stub dies on every
   `nav` - re-inject after each navigation.
 
 ## Gotchas

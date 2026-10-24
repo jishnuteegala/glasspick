@@ -108,7 +108,7 @@ class Cdp {
 }
 
 // Attach to the run's page target (first existing page, else a fresh one), so
-// nav/wait/eval/shot all drive the SAME page across invocations.
+// nav/wait/eval/shot/sw-clear all drive the SAME page across invocations.
 async function page(cdp) {
   const { targetInfos } = await cdp.send("Target.getTargets");
   let targetId = targetInfos.find((t) => t.type === "page")?.targetId;
@@ -288,10 +288,21 @@ const commands = {
     const loc = await evalIn(cdp, sessionId, "location.origin").catch(() => null);
     if (loc !== origin) {
       await cdp.send("Page.navigate", { url: APP }, sessionId);
-      for (let i = 0; i < 30; i++) {
-        const ready = await evalIn(cdp, sessionId, "document.readyState === 'complete'").catch(() => false);
-        if (ready === true) break;
-        await new Promise((r) => setTimeout(r, 300));
+      // Poll the target origin, not just readyState: Runtime.evaluate can
+      // still resolve in the pre-navigation context (about:blank is already
+      // 'complete'), which would clear the wrong origin's storage.
+      let onOrigin = false;
+      for (let i = 0; i < 30 && !onOrigin; i++) {
+        onOrigin = await evalIn(
+          cdp,
+          sessionId,
+          `location.origin === ${JSON.stringify(origin)} && document.readyState === 'complete'`
+        ).catch(() => false);
+        if (!onOrigin) await new Promise((r) => setTimeout(r, 300));
+      }
+      if (!onOrigin) {
+        cdp.close();
+        fail(`sw-clear: page never reached ${origin}`);
       }
     }
     await evalIn(

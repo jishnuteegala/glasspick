@@ -13,7 +13,7 @@ a hash route so it works on any static host without SPA fallback. Sections:
 ## How to get to it (user POV)
 
 - Choose `Design system` in the site footer.
-- Open `http://127.0.0.1:4173/#design-system` directly.
+- Open `http://localhost:4173/#design-system` directly.
 
 ## Driving it with gp-verify
 

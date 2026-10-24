@@ -11,7 +11,8 @@ human-readable error instead of a browser exception.
   for the matching pasted JSON record.
 - `verify-manual` accepts a pasted record and reports a three-state verdict:
   `Verified against the public beacon`, `Locally consistent, beacon
-  unavailable`, or `Verification failed`, with per-check Pass/Fail rows.
+  unavailable`, or `Verification failed`, with per-check rows labelled Pass,
+  Fail, or `Not confirmed` for indeterminate checks.
 - `verify-badlink` shows one clean alert for a damaged or incomplete link.
 
 ## How to get to it (user POV)

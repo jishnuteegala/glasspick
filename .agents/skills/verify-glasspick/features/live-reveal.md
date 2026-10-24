@@ -25,7 +25,9 @@ Preconditions:
 
 - **Countdown.** `nav` to the `#gpp1=` URL, `wait "!!document.getElementById('live-reveal')"`,
   `eval` `.countdown-number` (monospace digits matching
-  `/^\d{1,2}(:\d{2}){0,2}$/`) and `h1.reveal-round` (`Quicknet round <n>`),
+  `/^\d{1,2}(:\d{2}){0,2}$/` - the regex caps at 99h, which covers any
+  app-minted link's ~15s window; hand-built far-future envelopes can exceed
+  it) and `h1.reveal-round` (`Quicknet round <n>`),
   `shot` it.
 - **Skip link.** `eval` a `.click()` on `a.skip-link` (`Skip to live reveal`),
   then assert `eval "location.hash"` still equals the `#gpp1=...` payload and
