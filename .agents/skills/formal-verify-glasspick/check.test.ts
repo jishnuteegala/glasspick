@@ -15,7 +15,8 @@ import { createFullEnvelope, createStub, decodeHash } from "../../../src/engine/
 // The product promise is "provably fair": every field of a draw record is
 // covered by the commitment/seed recompute, so any semantic mutation of a
 // valid record must be rejected by the parse -> verify pipeline.
-// G1 round-trip, G2 per-field mutation rejection, G3 envelope, G4 pickTicket.
+// G1 round-trip, G2 per-field mutation rejection, G3 envelope,
+// G4 pickTicket, G5 deriveSeed.
 
 // Deterministic RNG so the check is reproducible run to run.
 function mulberry32(seed: number) {
@@ -115,6 +116,57 @@ const MUTATIONS: Mutation[] = [
   { field: "version", apply: (r) => ({ ...r, version: 3 }) },
   { field: "algorithm", apply: (r) => ({ ...r, algorithm: "fake-v1" }) },
   { field: "chainHash", apply: (r) => ({ ...r, chainHash: hex(64) }) },
+  {
+    // Count-consistent forgery: promote every alternate into winners and fix
+    // both counts so the record stays self-consistent. Only the commitment
+    // binding can reject this - the exact hole the matrix exists to cover.
+    field: "counts-promote-alternates",
+    apply: (r) => ({
+      ...r,
+      winnerCount: r.winnerCount + r.alternateCount,
+      alternateCount: 0,
+      winners: [...r.winners, ...r.alternates],
+      alternates: [],
+    }),
+  },
+  {
+    field: "winners-name",
+    apply: (r) => {
+      if (r.winners.length < 1) return null;
+      const winners = r.winners.map((w, i) => (i === 0 ? { ...w, name: w.name + "_x" } : w));
+      return { ...r, winners };
+    },
+  },
+  {
+    field: "winners-weight",
+    apply: (r) => {
+      if (r.winners.length < 1) return null;
+      const winners = r.winners.map((w, i) => (i === 0 ? { ...w, weight: w.weight + 1 } : w));
+      return { ...r, winners };
+    },
+  },
+  {
+    field: "alternates-name",
+    apply: (r) => {
+      if (r.alternates.length < 1) return null;
+      const alternates = r.alternates.map((a, i) => (i === 0 ? { ...a, name: a.name + "_x" } : a));
+      return { ...r, alternates };
+    },
+  },
+  {
+    field: "entries-name",
+    apply: (r) => {
+      const entries = r.entries.map((e, i) => (i === 0 ? { ...e, name: e.name + "_x" } : e));
+      return { ...r, entries };
+    },
+  },
+  {
+    field: "entry-injected-key",
+    apply: (r) => {
+      const entries = r.entries.map((e, i) => (i === 0 ? { ...e, injected: true } : e));
+      return { ...r, entries };
+    },
+  },
 ];
 
 describe("formal verify: draw-record tamper evidence", () => {
@@ -130,19 +182,23 @@ describe("formal verify: draw-record tamper evidence", () => {
 
   it("G2 every semantic field mutation is rejected by the pipeline", async () => {
     const bad: string[] = [];
+    const fired = new Set<string>();
     for (let i = 0; i < CASES; i++) {
       const record = await runDraw(await createCommitment(makeInputs()), hex(64));
       for (const m of MUTATIONS) {
         const mutant = m.apply(clone(record));
         if (mutant === null) continue;
         if (JSON.stringify(mutant) === JSON.stringify(record)) continue;
+        fired.add(m.field);
         if (!(await rejected(mutant))) bad.push(`case ${i} field ${m.field}: mutated record verified`);
       }
     }
+    for (const m of MUTATIONS)
+      if (!fired.has(m.field)) bad.push(`mutation ${m.field} never produced a distinct record`);
     expect(bad).toEqual([]);
   });
 
-  it("G3 envelopes round-trip and corrupted links throw", async () => {
+  it("G3 envelopes round-trip; corrupted links throw or decode identically", async () => {
     const bad: string[] = [];
     for (let i = 0; i < 5; i++) {
       const record = await runDraw(await createCommitment(makeInputs()), hex(64));
@@ -187,15 +243,19 @@ describe("formal verify: draw-record tamper evidence", () => {
       const b = await pickTicket(total, seed, 0);
       if (a !== b || a < 0 || a >= total) bad.push(`total=${total}: ${a} vs ${b}`);
     }
-    // Rejection sampling: first digest beyond the limit must consume attempt 1.
+    // Rejection sampling: first digest beyond the limit must consume attempt 1,
+    // and the attempt counter must actually reach the hash preimage.
     const total = 100;
     const limit = (1n << 256n) - ((1n << 256n) % BigInt(total));
     let calls = 0;
-    const ticket = await pickTicket(total, seed, 3, async () => {
+    const seen: string[] = [];
+    const ticket = await pickTicket(total, seed, 3, async (input) => {
       calls++;
-      return calls === 1 ? limit.toString(16).padStart(64, "f").slice(-64) : "0".repeat(64);
+      seen.push(input);
+      return calls === 1 ? limit.toString(16).slice(-64) : "0".repeat(64);
     });
     if (calls !== 2 || ticket !== 0) bad.push(`rejection: ticket=${ticket} calls=${calls}`);
+    if (seen[1] !== `${seed}|3|1`) bad.push(`rejection: call 2 preimage was ${seen[1]}`);
     expect(bad).toEqual([]);
   });
 
