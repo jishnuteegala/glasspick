@@ -243,8 +243,9 @@ describe("formal verify: draw-record tamper evidence", () => {
       const b = await pickTicket(total, seed, 0);
       if (a !== b || a < 0 || a >= total) bad.push(`total=${total}: ${a} vs ${b}`);
     }
-    // Rejection sampling: first digest beyond the limit must consume attempt 1,
-    // and the attempt counter must actually reach the hash preimage.
+    // Rejection sampling: a digest at the rejection boundary (== limit, the
+    // minimal rejected value) must consume attempt 1, and the attempt counter
+    // must actually reach the hash preimage.
     const total = 100;
     const limit = (1n << 256n) - ((1n << 256n) % BigInt(total));
     let calls = 0;
