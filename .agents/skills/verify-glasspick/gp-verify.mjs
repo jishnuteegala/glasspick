@@ -292,7 +292,8 @@ const commands = {
       // still resolve in the pre-navigation context (about:blank is already
       // 'complete'), which would clear the wrong origin's storage.
       let onOrigin = false;
-      for (let i = 0; i < 30 && !onOrigin; i++) {
+      const deadline = Date.now() + TIMEOUT;
+      while (Date.now() < deadline && !onOrigin) {
         onOrigin = await evalIn(
           cdp,
           sessionId,
@@ -310,9 +311,16 @@ const commands = {
       sessionId,
       `(async () => {
         localStorage.clear(); sessionStorage.clear();
-        for (const k of await caches.keys()) await caches.delete(k);
-        for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-        if (indexedDB.databases) for (const d of await indexedDB.databases()) indexedDB.deleteDatabase(d.name);
+        if (typeof caches !== 'undefined')
+          for (const k of await caches.keys()) await caches.delete(k);
+        if ('serviceWorker' in navigator)
+          for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+        if (indexedDB.databases)
+          for (const d of await indexedDB.databases())
+            await new Promise((resolve) => {
+              const req = indexedDB.deleteDatabase(d.name);
+              req.onsuccess = req.onerror = req.onblocked = resolve;
+            });
         return true;
       })()`
     );
