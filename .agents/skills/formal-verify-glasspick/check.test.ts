@@ -42,7 +42,7 @@ const hex = (len: number) =>
 function makeInputs(): DrawInputs {
   const count = 2 + rand(7);
   const names = new Set<string>();
-  while (names.size < count) names.add(NAME_POOL[rand(NAME_POOL.length)]! + `_${rand(1000)}`);
+  while (names.size < count) names.add(NAME_POOL[rand(NAME_POOL.length)] + `_${rand(1000)}`);
   const entries = [...names].map((name) => ({ name, weight: 1 + rand(1e5) }));
   const winnerCount = 1 + rand(Math.min(3, count));
   return {
@@ -59,12 +59,13 @@ const CASES = 15;
 // Every mutation must keep the record structurally plausible where the point
 // is hash coverage; parseRecord throwing is also a valid rejection.
 async function rejected(mutant: unknown): Promise<boolean> {
+  let parsed: DrawRecord;
   try {
-    parseRecord(mutant);
+    parsed = parseRecord(mutant);
   } catch {
     return true;
   }
-  const result = await verifyDraw(mutant as DrawRecord);
+  const result = await verifyDraw(parsed);
   return !result.ok;
 }
 
@@ -72,7 +73,7 @@ function clone(r: DrawRecord): DrawRecord {
   return structuredClone(r);
 }
 
-type Mutation = { field: string; apply: (r: DrawRecord) => DrawRecord | null };
+type Mutation = { field: string; apply: (r: DrawRecord) => unknown };
 
 const MUTATIONS: Mutation[] = [
   { field: "nonce", apply: (r) => ({ ...r, nonce: hex(32) }) },
@@ -87,7 +88,7 @@ const MUTATIONS: Mutation[] = [
     apply: (r) => {
       if (r.winners.length < 2) return null;
       const winners = [...r.winners];
-      [winners[0], winners[1]] = [winners[1]!, winners[0]!];
+      [winners[0], winners[1]] = [winners[1], winners[0]];
       return { ...r, winners };
     },
   },
@@ -97,7 +98,7 @@ const MUTATIONS: Mutation[] = [
       if (r.alternates.length < 1) return null;
       const winners = [...r.winners];
       const alternates = [...r.alternates];
-      [winners[0], alternates[0]] = [alternates[0]!, winners[0]!];
+      [winners[0], alternates[0]] = [alternates[0], winners[0]];
       return { ...r, winners, alternates };
     },
   },
@@ -106,13 +107,13 @@ const MUTATIONS: Mutation[] = [
     field: "entries-weight",
     apply: (r) => {
       const entries = r.entries.map((e) => ({ ...e }));
-      entries[0]!.weight += 1;
+      entries[0].weight += 1;
       return { ...r, entries };
     },
   },
-  { field: "unknown-key", apply: (r) => ({ ...r, injected: true } as DrawRecord) },
-  { field: "version", apply: (r) => ({ ...r, version: 3 } as unknown as DrawRecord) },
-  { field: "algorithm", apply: (r) => ({ ...r, algorithm: "fake-v1" } as unknown as DrawRecord) },
+  { field: "unknown-key", apply: (r) => ({ ...r, injected: true }) },
+  { field: "version", apply: (r) => ({ ...r, version: 3 }) },
+  { field: "algorithm", apply: (r) => ({ ...r, algorithm: "fake-v1" }) },
   { field: "chainHash", apply: (r) => ({ ...r, chainHash: hex(64) }) },
 ];
 
