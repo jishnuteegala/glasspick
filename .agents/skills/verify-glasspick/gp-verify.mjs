@@ -317,9 +317,11 @@ const commands = {
           for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
         if (indexedDB.databases)
           for (const d of await indexedDB.databases())
-            await new Promise((resolve) => {
+            await new Promise((resolve, reject) => {
               const req = indexedDB.deleteDatabase(d.name);
-              req.onsuccess = req.onerror = req.onblocked = resolve;
+              req.onsuccess = resolve;
+              req.onerror = () => reject(req.error);
+              req.onblocked = () => reject(new Error('deleteDatabase blocked: ' + d.name));
             });
         return true;
       })()`
