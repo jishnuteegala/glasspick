@@ -1,0 +1,3 @@
+overrides:
+  # Remove once a workbox-build release accepts glob 14 (GoogleChrome/workbox#3604).
+  workbox-build>glob: ^14.0.4
