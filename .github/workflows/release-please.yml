@@ -21,9 +21,9 @@ jobs:
   release:
     uses: jishnuteegala/.github/.github/workflows/release-please.yml@v1
     permissions:
+      actions: read
       contents: write
       issues: write
       pull-requests: write
     with:
       recover-tag: ${{ inputs.recover_tag || '' }}
-    secrets: inherit
