@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@d81f20346fa6ec12b38ee0eb83bd22c7dd8e2895
+    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@129e56114c4903f7d17dccaaaad6d5a1d300aed1
     with:
       os: '["ubuntu-latest", "windows-latest"]'
       post-check: |
