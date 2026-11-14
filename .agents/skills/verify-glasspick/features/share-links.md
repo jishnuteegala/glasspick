@@ -14,7 +14,9 @@ the draw - each copy action confirms with a `Copied` state.
 - `share-full` copies the full `#gp1=` record link; the button is
   `Copy full record link` and is disclosure-gated by its own checkbox.
 - `share-feedback` shows `Copied` for ~2s on success and a clean error on
-  clipboard failure.
+  clipboard failure; the label also reverts early if the disclosure
+  checkbox is unticked mid-window, and the shared `copied` state moves to
+  whichever link was copied last.
 
 ## How to get to it (user POV)
 
@@ -41,7 +43,11 @@ Preconditions:
   only. Inject a stub before clicking:
   `eval "navigator.clipboard.writeText = t => (window.__copied = t, Promise.resolve())"`,
   then `eval "window.__copied"` and assert it starts `http://localhost:4173/#gpp1=`
-  or `http://localhost:4173/#gp1=` and the whole URL is under 16000 chars. The stub dies on every
+  or `http://localhost:4173/#gp1=` and the whole URL is at most 16000 chars
+  (the app rejects only a full URL over 16000; the envelope layer bounds the
+  payload the same way). Capture the full
+  `window.__copied` string for downstream recipes - a truncated value is a
+  damaged link by definition. The stub dies on every
   `nav` - re-inject after each navigation.
 
 ## Gotchas
