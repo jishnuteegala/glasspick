@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.1.1](https://github.com/jishnuteegala/glasspick/compare/v0.1.0...v0.1.1) (2026-11-14)
+
+
+### Features
+
+* record docs, build, and ci commits in changelogs ([#25](https://github.com/jishnuteegala/glasspick/issues/25)) ([ef6a837](https://github.com/jishnuteegala/glasspick/commit/ef6a837e7c144f864fe5d7da2454f3a62a10bd32))
+
+
+### Bug Fixes
+
+* pre-launch quality pass over surfaces and prose ([#28](https://github.com/jishnuteegala/glasspick/issues/28)) ([ddbed3d](https://github.com/jishnuteegala/glasspick/commit/ddbed3d45ed3b1bd2becbaf669c87c821ea39311))
+
+
+### Documentation
+
+* advance formal-verify-glasspick sync commit to 1a89b2b ([#39](https://github.com/jishnuteegala/glasspick/issues/39)) ([129bb7c](https://github.com/jishnuteegala/glasspick/commit/129bb7cc0ff1623a45ce65ffe06d6583fa045179))
+* fix verify-glasspick drift and sw-clear on Chrome 155 ([#30](https://github.com/jishnuteegala/glasspick/issues/30)) ([009dc11](https://github.com/jishnuteegala/glasspick/commit/009dc11eaa1109af4da8fd6ceb9a917021e87f18))
+* tighten verify-glasspick map precision from weekly pass ([#38](https://github.com/jishnuteegala/glasspick/issues/38)) ([d1e34d1](https://github.com/jishnuteegala/glasspick/commit/d1e34d104e1e0366b9adb76971af8d57450ac690))
+
+
+### Build System
+
+* check out text files with LF line endings ([#37](https://github.com/jishnuteegala/glasspick/issues/37)) ([1a89b2b](https://github.com/jishnuteegala/glasspick/commit/1a89b2b1ae134dde4e88c32ade8c02a9472456a7))
+* **deps-dev:** bump vitest and vite to clear security alerts ([#33](https://github.com/jishnuteegala/glasspick/issues/33)) ([1ceef44](https://github.com/jishnuteegala/glasspick/commit/1ceef446c3ce05bea818afc56764875d2d129ce9))
+* **deps-dev:** move workbox-build to glob 14 to clear the minimatch alert ([#34](https://github.com/jishnuteegala/glasspick/issues/34)) ([f2cc21d](https://github.com/jishnuteegala/glasspick/commit/f2cc21d4961d9127571c97fa11ff93979378dca9))
+* pin Node 24.22.2 in .node-version ([cfad54a](https://github.com/jishnuteegala/glasspick/commit/cfad54a0564fc2f4c324d15d8af7f15f8ea17025))
+
+
+### Continuous Integration
+
+* keep every main CI result and scope the release caller ([#32](https://github.com/jishnuteegala/glasspick/issues/32)) ([cfad54a](https://github.com/jishnuteegala/glasspick/commit/cfad54a0564fc2f4c324d15d8af7f15f8ea17025))
+
 ## 0.1.0 (2026-08-03)
 
 
