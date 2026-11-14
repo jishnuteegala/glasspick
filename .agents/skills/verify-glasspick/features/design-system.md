@@ -25,9 +25,15 @@ Preconditions:
   `wait` for `h1` text `Design system`, `eval` the `h2` section headings or a
   `code` token name from `src/tokens.ts` (e.g. `--color-primary`), `shot`
   light and dark. The helper has no media-emulation command - send
-  `Emulation.setEmulatedMedia` with `prefers-color-scheme` over the same CDP
-  port in a one-off script, then `shot` while it holds; assert
-  `--color-ink` computed to `#0f1729` (light) vs `#eef1f7` (dark).
+  `Emulation.setEmulatedMedia` (`media: ""` plus a
+  `prefers-color-scheme` feature entry) to the page target over the same CDP
+  port in a one-off script, and keep that script's WebSocket open across the
+  `shot`: the override is session-scoped and dies the moment the setter's
+  connection closes (observed on Chrome 157). Assert
+  `--color-ink` via `getComputedStyle(document.documentElement)` -
+  `#0f1729` (light) vs `#eef1f7` (dark). Do not read the on-page
+  `TokenMeta` value spans for this; they are computed once at mount and stay
+  stale across the flip.
 - **Footer link.** On `/`, find the footer `Design system` anchor via `eval`,
   click it, assert `location.hash === "#design-system"` and the inventory
   rendered.

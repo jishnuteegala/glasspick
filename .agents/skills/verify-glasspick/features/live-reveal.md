@@ -50,3 +50,9 @@ Preconditions:
   was minted). `main#live-reveal` mounts in every phase, so wait on
   `.countdown-readout` for countdown evidence and be ready to land straight on
   winners; mint a fresh link and nav immediately to catch the countdown.
+- Winners need live drand relays: if both stay unreachable past a ~30s grace
+  period (or ~10s when the schedule sync itself fails) the page lands on an
+  `unavailable` phase showing `.notice-warn`, a `#manual-beacon` form, and
+  `Retry relays` - a real terminal state, not a hang. Do not sit in a
+  `.winner-reveal` wait through an offline run; pass `--timeout` above the
+  helper's 15s default to cover the grace window.
