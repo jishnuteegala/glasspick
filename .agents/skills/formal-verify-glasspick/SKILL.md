@@ -27,7 +27,7 @@ Uses the repo's vitest (required - imports are extensionless, plain `node` canno
 | `src/engine/envelope.ts` | `createFullEnvelope`, `createStub`, `decodeHash` | both link shapes + corruption |
 | `src/engine/hash.ts` | `sha256Hex` | exercised through every call above |
 
-**Sync commit:** `1a89b2b` (committed 2026-11-12; verified in sync on 2026-11-14). Move this forward only after re-running the check and confirming the mutation list covers the record shape at the new commit.
+**Sync commit:** `129bb7c` (committed 2026-11-14; verified in sync on 2026-11-21). Move this forward only after re-running the check and confirming the mutation list covers the record shape at the new commit.
 
 Not covered, on purpose: `verifyPublicDraw`/`drand.ts` (network boundary - live drive in `verify-glasspick` covers the beacon path), `x-integration.ts` import parsing, `#gpp1=` pending-envelope mutation coverage (commitment recompute is checked on decode; add mutations if the pending shape grows fields), and all React.
 
