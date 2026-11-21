@@ -47,9 +47,10 @@ Preconditions:
   headless; that affects the share recipes, not commit.
 - The pending view can announce itself through a live region; assert on the
   rendered round/hash, not on announcement text.
-- Entrant parsing is strict about formats; use the documented plain list from
-  the README, not invented syntax. Plain mode splits on newlines AND commas;
-  strictness lives in weighted mode and name canonicalization.
+- Entrant parsing is strict about formats; use the textarea's documented
+  placeholder list (`alice`, `bob`, `carol` - one per line), not invented
+  syntax. Plain mode splits on newlines AND commas; strictness lives in
+  weighted mode and name canonicalization.
 - A reused profile showing `Commitment locked` (or `Draw complete`) is
   leftover `glasspick-pending-v2`/`glasspick-record-v1` state, not a bug -
   run `sw-clear` or use a fresh profile before calling entry broken.

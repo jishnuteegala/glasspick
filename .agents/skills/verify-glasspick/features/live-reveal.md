@@ -36,7 +36,9 @@ Preconditions:
 - **Winners.** Just wait: the committed round sits ~5 quicknet rounds (~15s)
   out and the page polls every 2s. `wait "!!document.querySelector('.winner-reveal')"`
   with a generous timeout, then `eval` the `.winner-list` names and the
-  `Winner: @name` live-region text; `shot` it.
+  `Winner: @name` live-region text (`Winners: @a, @b` when the draw has more
+  than one winner - assert the `Winners?: ` form, not a literal `Winner: `
+  prefix); `shot` it.
 
 ## Gotchas
 
