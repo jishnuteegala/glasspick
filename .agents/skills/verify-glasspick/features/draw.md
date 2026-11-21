@@ -48,7 +48,8 @@ Preconditions:
 - The pending view can announce itself through a live region; assert on the
   rendered round/hash, not on announcement text.
 - Entrant parsing is strict about formats; use the textarea's documented
-  placeholder list (`alice`, `bob`, `carol` - one per line), not invented
+  placeholder list (plain mode `alice`, `bob`, `carol` - one per line;
+  weighted mode `alice,3`/`bob,1` - `name,weight` per line), not invented
   syntax. Plain mode splits on newlines AND commas; strictness lives in
   weighted mode and name canonicalization.
 - A reused profile showing `Commitment locked` (or `Draw complete`) is
